@@ -12,7 +12,7 @@ Repository masih berupa starter Next.js 16.2.10 + Tailwind 4, sedangkan `docs/sp
 
 ## 2. Halaman publik statis Fase 1
 
-- Bangun `app/page.tsx` sebagai Beranda: hero sederhana dengan nama komunitas dan tagline “Yesus, Engkau Andalanku”, sambutan Ketua berupa placeholder, slot renungan, slot kegiatan terdekat, dan CTA Kontak.
+- Bangun `app/page.tsx` sebagai Beranda: hero sederhana dengan nama komunitas dan tagline "Yesus, Engkau Andalanku", sambutan Ketua berupa placeholder, slot renungan, slot kegiatan terdekat, dan CTA Kontak.
 - Tambahkan `app/tentang-kami/page.tsx`: sejarah devosi yang ditulis orisinal dan ringkas, sejarah KKI Karawaci serta susunan pengurus dengan placeholder per data yang belum tersedia.
 - Tambahkan `app/devosi-jadwal/page.tsx`: lima unsur devosi, struktur teks Koronka yang mudah dipindai, Jam Kerahiman pukul 15.00, jadwal rutin, dan kegiatan tahunan. Konten faktual komunitas tetap placeholder; jangan menyalin artikel pihak lain.
 - Tambahkan `app/kontak/page.tsx`: alamat gereja dari spec, tautan eksternal ke `santoagustinus.id`, dan placeholder WhatsApp/email resmi; tidak membuat form kontak karena tidak diminta.
@@ -21,34 +21,35 @@ Repository masih berupa starter Next.js 16.2.10 + Tailwind 4, sedangkan `docs/sp
 
 ## 3. Domain renungan dan tampilan publik
 
-- Definisikan tipe dan validasi terpusat di `lib/renungan/` sesuai schema spec: `tanggal`, `judul?`, `ayat`, `referensiAyat`, `isiRenungan`, `doaPenutup?`, `status`, dan timestamp. UI tidak akan bergantung langsung pada Firestore snapshot/Timestamp.
+- Definisikan tipe dan validasi terpusat di `lib/renungan/` sesuai schema final: `tanggal`, `judul?`, `ayat`, `referensiAyat`, `isiRenungan`, `doaPenutup?`, `status`, dan timestamp. **Tidak ada field gambar (`gambarUrl`/`gambarAlt`) di fase 1** — lihat keputusan final di bagian 5. **Tidak ada field `terjemahanAyat` per dokumen** — terjemahan Kitab Suci ditulis sebagai keterangan tetap di UI, bukan bagian dari schema. UI tidak akan bergantung langsung pada Firestore snapshot/Timestamp.
+- Tambahkan elemen keterangan tetap ("Kutipan Kitab Suci menggunakan Alkitab Terjemahan Baru (TB), Lembaga Alkitab Indonesia.") pada layout/halaman yang menampilkan renungan (Beranda dan arsip/detail Renungan), ditulis satu kali sebagai teks statis, bukan data per dokumen.
 - Buat kontrak repository publik/admin terpisah agar halaman publik hanya dapat meminta dokumen `published`. Implementasi awal menggunakan repository lokal kosong/fixture yang jelas untuk memungkinkan UI dan test berjalan sebelum credential Firebase tersedia.
-- Buat utilitas tanggal `Asia/Jakarta` dan fallback Beranda: published hari ini → published terakhir dengan tanggal tidak melebihi hari ini → empty state. Jika memakai fallback lama, label menjadi “Renungan Terbaru”, bukan mengklaim “hari ini”.
+- Buat utilitas tanggal `Asia/Jakarta` dan fallback Beranda: published hari ini → published terakhir dengan tanggal tidak melebihi hari ini → empty state. Jika memakai fallback lama, label menjadi "Renungan Terbaru", bukan mengklaim "hari ini".
 - Tambahkan `app/renungan/page.tsx` untuk arsip newest-first dengan pagination sederhana dan `app/renungan/[tanggal]/page.tsx` untuk detail. Dynamic `params` mengikuti API async Next.js 16; format tanggal divalidasi, draft/tanggal invalid memakai `notFound()`, dan isi teks dirender per paragraf tanpa `dangerouslySetInnerHTML`.
-- Komponen reusable berada di `components/renungan/` dan `components/schedule/`; tanggal memakai elemen `<time>` dan layout artikel dibatasi untuk keterbacaan.
+- Komponen reusable berada di `components/renungan/` dan `components/schedule/`; tanggal memakai elemen `<time>` dan layout artikel dibatasi untuk keterbacaan. Kartu/detail renungan dirancang tanpa slot gambar di fase 1.
 
 ## 4. Firebase, aturan keamanan, dan admin (setelah konfigurasi eksternal tersedia)
 
 - Tambahkan Firebase Web SDK dan singleton config di `lib/firebase/`, dengan environment variables untuk project development/production. Jangan commit `.env`, service-account JSON, atau secret; akun Ketua dibuat manual dan self-sign-up tidak disediakan.
-- Version-control `firebase/firestore.rules` dan `firebase/firestore.indexes.json`. Rules memisahkan public published-only dari admin read/write, memvalidasi field/type/status, memastikan document ID sama dengan `tanggal`, menolak field asing, dan memakai UID admin awal atau custom claim saat jumlah admin bertambah. Query arsip selalu menyertakan filter `status == published`; index minimum `status ASC, tanggal DESC`.
-- Bangun `app/admin/` dengan login email/password, logout, daftar newest-first, create/edit/delete, serta form besar dan sederhana. Field mencakup judul opsional agar konsisten dengan schema; aksi eksplisit “Simpan sebagai Draf” dan “Terbitkan”; tanggal dikunci setelah dokumen dibuat; hapus/publish memakai konfirmasi; error mempertahankan input dan status sukses diumumkan secara aksesibel.
+- Version-control `firebase/firestore.rules` dan `firebase/firestore.indexes.json`. Rules memisahkan public published-only dari admin read/write, memvalidasi field/type/status sesuai schema final di bagian 3 (tanpa field gambar, tanpa field terjemahan), memastikan document ID sama dengan `tanggal`, menolak field asing, dan memakai UID admin awal atau custom claim saat jumlah admin bertambah. Query arsip selalu menyertakan filter `status == published`; index minimum `status ASC, tanggal DESC`.
+- Bangun `app/admin/` dengan login email/password, logout, daftar newest-first, create/edit/delete, serta form besar dan sederhana. Field form mengikuti schema final (tanggal, judul opsional, ayat, referensiAyat, isiRenungan, doaPenutup opsional, status) — **tidak ada field upload gambar atau pilihan terjemahan di form**; aksi eksplisit "Simpan sebagai Draf" dan "Terbitkan"; tanggal dikunci setelah dokumen dibuat; hapus/publish memakai konfirmasi; error mempertahankan input dan status sukses diumumkan secara aksesibel.
 - Client-side auth guard hanya untuk UX; Firestore Rules tetap menjadi batas keamanan. Timestamp create/update menggunakan `serverTimestamp()` dan input dinormalisasi/dites pada boundary repository.
 - Ganti repository lokal publik dengan implementasi Firestore setelah emulator dan rules lulus. Pilih dynamic read atau revalidation pendek berdasarkan API caching Next.js 16 yang terpasang agar publish cepat terlihat tanpa endpoint revalidation yang belum diamankan.
 
-## 5. Cloudinary dan keputusan schema yang ditunda
+## 5. Keputusan schema yang sudah difinalkan, dan Cloudinary
 
-- Cloudinary tidak memblokir slice awal. Setelah cloud name, unsigned preset terbatas, folder, batas MIME/ukuran, dan hak pakai gambar tersedia, tambahkan uploader browser dengan progress/error serta `images.remotePatterns` yang ketat di `next.config.ts`.
-- Jangan menambah field schema secara diam-diam. Sebelum upload per-renungan dibuat, konfirmasi apakah dibutuhkan `gambarUrl`/`gambarAlt`. Sebelum backend final, tentukan pula apakah terjemahan Kitab Suci adalah konfigurasi global atau field `terjemahanAyat`; spec mewajibkan atribusi tetapi tabel awal belum memuat field tersebut.
+- **Final — tidak ada gambar per renungan di fase 1.** Field `gambarUrl`/`gambarAlt` tidak ditambahkan ke schema, form admin, maupun tampilan publik. Alasan: mengurangi kompleksitas form untuk Ketua (pengguna non-teknis), dan Cloudinary belum siap dipakai (lihat di bawah). Jika kebutuhan gambar muncul nyata di kemudian hari, ini masuk sebagai pekerjaan fase 2 terpisah, bukan bagian dari rilis awal.
+- **Final — terjemahan Kitab Suci bukan field, melainkan keterangan tetap.** Situs menggunakan Alkitab Terjemahan Baru (TB) untuk seluruh kutipan ayat, dinyatakan sekali sebagai teks statis di halaman yang relevan (lihat bagian 3). Tidak ada field `terjemahanAyat` di schema maupun form admin.
+- **Karena kedua keputusan di atas, Cloudinary tidak dibutuhkan untuk rilis fase 1.** Cloudinary sepenuhnya ditunda; tidak ada pekerjaan integrasi (uploader, `images.remotePatterns`, environment config) di roadmap fase 1. Cloudinary hanya dipertimbangkan kembali jika fase 2 (galeri, kesaksian, atau gambar renungan) disepakati dan direncanakan ulang secara eksplisit — termasuk cloud name, unsigned preset terbatas, folder, batas MIME/ukuran, dan hak pakai gambar.
 - Fase 2 (galeri dan kesaksian) tetap tidak dibuat atau ditautkan sampai materi dan requirement tersedia.
 
 ## 6. Urutan eksekusi praktis
 
-1. Implementasikan fondasi visual, shell, seluruh halaman statis, placeholder, metadata, serta tampilan renungan berbasis repository lokal.
+1. Implementasikan fondasi visual, shell, seluruh halaman statis, placeholder, metadata, serta tampilan renungan berbasis repository lokal — sesuai schema final tanpa field gambar/terjemahan.
 2. Jalankan lint, typecheck, build, dan pengujian UI; perbaiki responsive/accessibility sampai stabil.
 3. Deploy preview skeleton ke Vercel hanya ketika pengguna mengizinkan tindakan eksternal dan sesi memiliki autentikasi Vercel.
 4. Setelah pengguna menyediakan/menyiapkan Firebase project, admin UID, dan environment config, implementasikan rules/indexes, admin, dan Firestore repository lalu uji lewat Emulator.
-5. Tambahkan Cloudinary hanya setelah akun/preset dan keputusan field gambar tersedia.
-6. Ganti seluruh `[ISI: ...]` bersama Ketua, tentukan terjemahan Kitab Suci, lakukan uji pakai admin di perangkat Ketua, lalu publish final.
+5. Ganti seluruh `[ISI: ...]` bersama Ketua, lakukan uji pakai admin di perangkat Ketua, lalu publish final. (Langkah Cloudinary dihapus dari urutan fase 1 — lihat bagian 5.)
 
 ## Critical files
 
@@ -60,8 +61,8 @@ Repository masih berupa starter Next.js 16.2.10 + Tailwind 4, sedangkan `docs/sp
 ## Verification
 
 - Static checks: `npm run lint`, `npx tsc --noEmit`, dan `npm run build`.
-- Unit tests (tooling ditambahkan bersama domain logic): validasi tanggal, timezone Jakarta, fallback today/latest/empty, published-only behavior, validasi form, dan perhitungan kegiatan terdekat dengan clock yang dapat diinjeksi.
+- Unit tests (tooling ditambahkan bersama domain logic): validasi tanggal, timezone Jakarta, fallback today/latest/empty, published-only behavior, validasi form sesuai schema final (tanpa field gambar/terjemahan), dan perhitungan kegiatan terdekat dengan clock yang dapat diinjeksi.
 - Browser/E2E: seluruh navigasi desktop/mobile, menu keyboard, viewport 320/375/tablet/desktop, zoom 200%, tidak ada horizontal overflow, focus order, target sentuh, placeholder terlihat, empty state, fallback label, arsip/detail/not-found, metadata, dan audit aksesibilitas.
-- Firebase Emulator: anonymous hanya membaca published; draft tidak bocor; anonymous/non-admin tidak menulis; admin dapat CRUD; payload/field/status/tanggal invalid ditolak; query dan index arsip berfungsi.
+- Firebase Emulator: anonymous hanya membaca published; draft tidak bocor; anonymous/non-admin tidak menulis; admin dapat CRUD; payload/field/status/tanggal invalid ditolak (termasuk field asing seperti gambar/terjemahan yang seharusnya ditolak rules); query dan index arsip berfungsi.
 - Alur admin end-to-end: login gagal/berhasil, buat draft, verifikasi tidak tampil publik, publish, edit, delete, refresh sesi, error jaringan, dan pencegahan double submit.
 - Review final bersama Ketua: akurasi sejarah/nama/jadwal/kontak, kemudahan membuat serta menerbitkan renungan di perangkat nyata, dan memastikan tidak ada placeholder tersisa sebelum produksi.
