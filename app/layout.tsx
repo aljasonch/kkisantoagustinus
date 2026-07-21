@@ -18,13 +18,40 @@ const alegreyaSans = Alegreya_Sans({
   subsets: ["latin"],
 });
 
+const deskripsiSitus =
+  "Komunitas Kerahiman Ilahi (KKI) Paroki Karawaci, Gereja Santo Agustinus, Tangerang. Jadwal doa Koronka, renungan harian, dan devosi Kerahiman Ilahi. Yesus, Engkau Andalanku.";
+
+// Dipakai Next.js untuk mengubah URL relatif (mis. /hero.jpg) menjadi absolut
+// pada tag Open Graph. Di Vercel otomatis memakai URL produksi bila variabel
+// NEXT_PUBLIC_SITE_URL belum diisi.
+const urlSitus =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(urlSitus),
   title: {
     default: "Komunitas Kerahiman Ilahi | Paroki Karawaci",
     template: "%s | KKI Paroki Karawaci",
   },
-  description:
-    "Komunitas Kerahiman Ilahi (KKI) Paroki Karawaci, Gereja Santo Agustinus, Tangerang. Jadwal doa Koronka, renungan harian, dan devosi Kerahiman Ilahi. Yesus, Engkau Andalanku.",
+  description: deskripsiSitus,
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    siteName: "Komunitas Kerahiman Ilahi Paroki Karawaci",
+    title: "Komunitas Kerahiman Ilahi | Paroki Karawaci",
+    description: deskripsiSitus,
+    images: [{ url: "/hero.jpg", alt: "Komunitas Kerahiman Ilahi Paroki Karawaci" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Komunitas Kerahiman Ilahi | Paroki Karawaci",
+    description: deskripsiSitus,
+    images: ["/hero.jpg"],
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({

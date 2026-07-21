@@ -16,12 +16,44 @@ export async function generateMetadata(
   const { tanggal } = await props.params;
   const renungan = await ambilRenungan(tanggal);
   if (!renungan) return { title: "Renungan" };
+
   const judul = renungan.judul || renungan.referensiAyat || "Renungan";
+  const tanggalPanjang = formatTanggalPanjang(renungan.tanggal);
+  const judulLengkap = `${judul}, Renungan ${tanggalPanjang}`;
+
+  // Deskripsi untuk preview sosial: pakai ayat bila ada, selain itu
+  // penggalan paragraf pertama renungan.
+  const paragrafPertama = keParagraf(renungan.isiRenungan)[0] ?? "";
+  const deskripsi = renungan.ayat
+    ? `\u201c${renungan.ayat}\u201d${
+        renungan.referensiAyat ? ` (${renungan.referensiAyat})` : ""
+      }`
+    : paragrafPertama
+      ? `${paragrafPertama.slice(0, 160)}\u2026`
+      : `Renungan harian ${tanggalPanjang}.`;
+
+  // Gambar renungan (Cloudinary) dipakai sebagai gambar preview; bila tidak
+  // ada, mundur ke gambar bawaan situs.
+  const gambar = renungan.gambarUrl || "/hero.jpg";
+
   return {
-    title: `${judul}, Renungan ${formatTanggalPanjang(renungan.tanggal)}`,
-    description: `Renungan harian ${formatTanggalPanjang(renungan.tanggal)}${
-      renungan.referensiAyat ? `: ${renungan.referensiAyat}.` : "."
-    }`,
+    title: judulLengkap,
+    description: deskripsi,
+    openGraph: {
+      type: "article",
+      locale: "id_ID",
+      siteName: "Komunitas Kerahiman Ilahi Paroki Karawaci",
+      title: judulLengkap,
+      description: deskripsi,
+      publishedTime: renungan.tanggal,
+      images: [{ url: gambar, alt: judul }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: judulLengkap,
+      description: deskripsi,
+      images: [gambar],
+    },
   };
 }
 
