@@ -44,7 +44,10 @@ export default async function ArsipRenungan() {
                     </span>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-base text-abu">{formatTanggalPanjang(r.tanggal)}</p>
+                    <p className="text-base text-abu">
+                      {formatTanggalPanjang(r.tanggal)}
+                      {r.penulis && <> &middot; oleh {r.penulis}</>}
+                    </p>
                     <p className="mt-1 font-display text-2xl text-tinta group-hover:text-emas-tua">
                       {r.judul || r.referensiAyat || formatTanggalPanjang(r.tanggal)}
                     </p>

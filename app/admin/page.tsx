@@ -103,14 +103,19 @@ function DaftarRenungan() {
                   <p className="mt-0.5 text-xl font-medium text-tinta">
                     {r.judul || r.referensiAyat || "(tanpa judul)"}
                   </p>
-                  <p
-                    className={`mt-1 inline-block rounded-md px-2.5 py-0.5 text-base font-medium ${
-                      r.status === "published"
-                        ? "bg-emas-muda text-emas-tua"
-                        : "bg-krem-tua text-abu"
-                    }`}
-                  >
-                    {r.status === "published" ? "Tayang" : "Draft"}
+                  <p className="mt-1 flex flex-wrap items-center gap-2">
+                    <span
+                      className={`inline-block rounded-md px-2.5 py-0.5 text-base font-medium ${
+                        r.status === "published"
+                          ? "bg-emas-muda text-emas-tua"
+                          : "bg-krem-tua text-abu"
+                      }`}
+                    >
+                      {r.status === "published" ? "Tayang" : "Draft"}
+                    </span>
+                    {r.penulis && (
+                      <span className="text-base text-abu">oleh {r.penulis}</span>
+                    )}
                   </p>
                 </div>
               </div>

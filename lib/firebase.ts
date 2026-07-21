@@ -32,3 +32,12 @@ export function getDb(): Firestore {
 export function getAuthClient(): Auth {
   return getAuth(getFirebaseApp());
 }
+
+/**
+ * Konfigurasi Firebase mentah. Dipakai untuk membuat instance app sekunder
+ * saat admin mendaftarkan akun baru (lihat lib/pengguna.ts), agar sesi login
+ * admin yang sedang berjalan tidak ikut terganti.
+ */
+export function getFirebaseConfig(): Record<string, string | undefined> {
+  return firebaseConfig;
+}

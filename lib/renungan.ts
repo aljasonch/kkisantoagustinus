@@ -24,6 +24,8 @@ export type Renungan = {
   kutipanFaustina?: string;
   isiRenungan: string;
   doaPenutup?: string;
+  /** Nama penulis/pengurus yang menyusun renungan ini (opsional). */
+  penulis?: string;
   status: StatusRenungan;
 };
 
@@ -65,6 +67,7 @@ function keRenungan(id: string, data: Record<string, unknown>): Renungan {
     kutipanFaustina: data.kutipanFaustina as string | undefined,
     isiRenungan: (data.isiRenungan as string) ?? "",
     doaPenutup: data.doaPenutup as string | undefined,
+    penulis: data.penulis as string | undefined,
     status: (data.status as StatusRenungan) ?? "draft",
   };
 }

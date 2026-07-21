@@ -13,10 +13,9 @@ const pengurus = [
   { jabatan: "Romo Pendamping / Moderator", nama: "Tarcisius Warhadi H., OSC" },
   { jabatan: "Ketua", nama: "B. Dwiyana Taurisia" },
   { jabatan: "Wakil Ketua", nama: "Katarina Teti" },
-  { jabatan: "Sekretaris 1", nama: "Hui Mey Hua" },
-  { jabatan: "Sekretaris 2", nama: "Agustina Hernanto" },
+  { jabatan: "Sekretaris 1", nama: "Agustina Hernanto" },
+  { jabatan: "Sekretaris 2", nama: "Oei Mey Hwa" },
   { jabatan: "Bendahara", nama: "Bernadetta Ayen" },
-  { jabatan: "Liturgi", nama: "Nunuk" },
 ];
 
 export default function Tentang() {

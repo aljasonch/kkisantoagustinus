@@ -11,13 +11,14 @@ import {
 } from "@/components/admin/gerbang-pengurus";
 import { unggahFotoKeCloudinary } from "@/lib/cloudinary";
 import { getDb } from "@/lib/firebase";
+import type { Pengguna } from "@/lib/pengguna";
 import {
   POLA_TANGGAL,
   tanggalHariIni,
   type StatusRenungan,
 } from "@/lib/renungan";
 
-function EditorRenungan() {
+function EditorRenungan({ profil }: { profil: Pengguna }) {
   const router = useRouter();
   const paramTanggal = useSearchParams().get("tanggal");
   const sedangMengubah = Boolean(paramTanggal && POLA_TANGGAL.test(paramTanggal));
@@ -98,6 +99,7 @@ function EditorRenungan() {
           kutipanFaustina: kutipanFaustina.trim(),
           isiRenungan: isiRenungan.trim(),
           doaPenutup: doaPenutup.trim(),
+          penulis: profil.nama.trim(),
           status,
           diperbaruiPada: serverTimestamp(),
           ...(sudahAda ? {} : { dibuatPada: serverTimestamp() }),
@@ -317,9 +319,9 @@ function EditorRenungan() {
 export default function HalamanEditor() {
   return (
     <GerbangPengurus>
-      {() => (
+      {(_user, profil) => (
         <Suspense fallback={<p className="text-abu">Memuat&hellip;</p>}>
-          <EditorRenungan />
+          <EditorRenungan profil={profil} />
         </Suspense>
       )}
     </GerbangPengurus>

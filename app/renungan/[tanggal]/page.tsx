@@ -46,6 +46,11 @@ export default async function DetailRenungan(props: PageProps<"/renungan/[tangga
         <h1 className="mt-2 font-display text-4xl leading-tight text-tinta sm:text-5xl">
           {renungan.judul || renungan.referensiAyat || "Renungan"}
         </h1>
+        {renungan.penulis && (
+          <p className="mt-3 text-abu">
+            oleh <span className="font-medium text-tinta-muda">{renungan.penulis}</span>
+          </p>
+        )}
       </header>
 
       {renungan.gambarUrl && (
