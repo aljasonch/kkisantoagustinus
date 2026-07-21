@@ -165,7 +165,7 @@ export default async function Beranda() {
             <p className="mt-1 text-base text-abu">
               Ketua Komunitas Kerahiman Ilahi
               <br />
-              Paroki Santo Agustinus Karawaci
+              Paroki Karawaci · Gereja Santo Agustinus
             </p>
           </div>
         </Muncul>
