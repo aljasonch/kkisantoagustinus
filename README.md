@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Website KKI Paroki Karawaci
 
-## Getting Started
+Situs Komunitas Kerahiman Ilahi (KKI) Paroki Karawaci, Gereja Santo Agustinus,
+Tangerang. Next.js (App Router) + Tailwind CSS v4 + Firebase.
 
-First, run the development server:
+Dokumen acuan:
+
+- [`docs/spec-website-kki-karawaci.md`](docs/spec-website-kki-karawaci.md): spec & roadmap
+- [`docs/design-guidelines-kki.md`](docs/design-guidelines-kki.md): panduan visual
+- [`docs/setup-firebase.md`](docs/setup-firebase.md): setup Firebase (Auth + Firestore + rules)
+
+## Menjalankan
 
 ```bash
+npm install
+# isi kredensial Firebase + Cloudinary di .env (lihat docs/setup-firebase.md)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Tanpa kredensial Firebase, situs tetap jalan: bagian renungan menampilkan pesan
+"belum tersedia" dan `/admin` menampilkan petunjuk setup.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Struktur
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Rute | Isi |
+|---|---|
+| `/` | Beranda: hero, Renungan Hari Ini, sambutan Ketua, kutipan Santa Faustina, jadwal rutin, galeri terbaru |
+| `/tentang` | Sejarah devosi & KKI Karawaci, pengurus |
+| `/devosi-jadwal` | 5 unsur devosi, teks Koronka penuh, jadwal rutin & tahunan |
+| `/renungan` | Arsip renungan published (urut mundur) |
+| `/renungan/[tanggal]` | Detail renungan per tanggal (`YYYY-MM-DD`) |
+| `/galeri` | Galeri foto kegiatan komunitas (Cloudinary + Firestore) |
+| `/kontak` | Kontak komunitas, alamat gereja + peta, tautan situs paroki |
+| `/admin` | Panel pengurus: login Firebase Auth, daftar & hapus renungan |
+| `/admin/editor` | Tulis/ubah renungan, Terbitkan atau Simpan sebagai Draft |
+| `/admin/galeri` | Unggah/hapus foto galeri (upload ke Cloudinary) |
 
-## Learn More
+Teks yang masih menunggu isian dari Ketua ditandai `[ISI: ...]` (bergaris
+bawah putus-putus emas di halaman); daftar lengkapnya ada di spec bagian 4.
 
-To learn more about Next.js, take a look at the following resources:
+## Status roadmap
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. ✅ Setup Next.js + Tailwind
+2. ✅ Halaman statis dengan placeholder `[ISI: ...]`
+3. ✅ Setup project Firebase di console (panduan: `docs/setup-firebase.md`) + Cloudinary
+4. ✅ Admin panel `/admin` (login + CRUD renungan + galeri)
+5. ✅ Renungan hari ini di Beranda + arsip
+6. ✅ Galeri kegiatan, Instagram, logo, peta, jadwal rutin
+7. ⬜ Review bareng Ketua, isi konten asli
+8. ⬜ Sesi pengajaran admin panel
+9. ⬜ Publish (Vercel)

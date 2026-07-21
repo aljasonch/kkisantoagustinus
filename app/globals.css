@@ -1,26 +1,109 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Palet Kerahiman Ilahi: putih, emas, aksen merah lembut */
+  --color-putih: #ffffff;
+  --color-krem: #faf6ee;
+  --color-krem-tua: #f3ecdd;
+  --color-emas: #b08d2e; /* hanya untuk teks besar / dekorasi (kontras 3:1) */
+  --color-emas-tua: #8a6d1f; /* teks & tombol di atas putih (kontras 4.9:1) */
+  --color-emas-muda: #e6d9b4;
+  --color-merah: #9e3b33; /* merah bata lembut, sinar merah lukisan */
+  --color-merah-muda: #f2e3e0;
+  --color-tinta: #2b2320;
+  --color-tinta-muda: #4a413c;
+  --color-abu: #5c534e;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-marcellus), serif;
+  --font-sans: var(--font-alegreya-sans), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-putih);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  font-size: 1.125rem; /* 18px, nyaman untuk pembaca lansia */
+  line-height: 1.75;
+}
+
+/* Gulir halus untuk tautan jangkar (mis. isyarat gulir di hero);
+   otomatis dimatikan oleh aturan reduced motion di bawah */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fokus keyboard yang jelas di semua elemen interaktif */
+:focus-visible {
+  outline: 3px solid var(--color-emas-tua);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--color-emas-muda);
+}
+
+/* Penanda konten yang masih menunggu isian dari Ketua */
+.placeholder {
+  color: var(--color-abu);
+  border-bottom: 2px dashed var(--color-emas);
+  font-style: italic;
+}
+
+/* Animasi muncul yang lembut, dimatikan otomatis bila pengguna
+   memilih reduced motion (aturan di bawah) */
+@keyframes masuk-lembut {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.anim-masuk {
+  animation: masuk-lembut 0.9s ease both;
+}
+
+/* Isyarat gulir di dasar hero — mengambang naik-turun perlahan */
+@keyframes gulir-lembut {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 1;
+  }
+}
+
+.anim-gulir {
+  animation: gulir-lembut 2.2s ease-in-out infinite;
+}
+
+.muncul-siap {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
+}
+
+.muncul-tampil {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

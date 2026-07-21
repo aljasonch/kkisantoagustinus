@@ -1,0 +1,294 @@
+"use client";
+
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  serverTimestamp,
+} from "firebase/firestore";
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  GerbangPengurus,
+  kelasInput,
+  kelasTombolUtama,
+} from "@/components/admin/gerbang-pengurus";
+import { cloudinarySiap, unggahFotoKeCloudinary } from "@/lib/cloudinary";
+import { getDb } from "@/lib/firebase";
+import {
+  formatTanggalPanjang,
+  POLA_TANGGAL,
+  tanggalHariIni,
+} from "@/lib/renungan";
+import type { FotoGaleri } from "@/lib/galeri";
+
+function KelolaGaleri() {
+  const [daftar, setDaftar] = useState<FotoGaleri[] | null>(null);
+  const [galat, setGalat] = useState<string | null>(null);
+  const [caption, setCaption] = useState("");
+  const [tanggal, setTanggal] = useState(tanggalHariIni());
+  const [tayang, setTayang] = useState(true);
+  const [berkas, setBerkas] = useState<File | null>(null);
+  const [pratinjau, setPratinjau] = useState<string | null>(null);
+  const [mengunggah, setMengunggah] = useState(false);
+  const inputBerkas = useRef<HTMLInputElement>(null);
+
+  const muatDaftar = useCallback(() => {
+    getDocs(collection(getDb(), "galeri"))
+      .then((snap) => {
+        setDaftar(
+          snap.docs
+            .map((d) => {
+              const data = d.data();
+              return {
+                id: d.id,
+                url: (data.url as string) ?? "",
+                caption: (data.caption as string) ?? "",
+                tanggal: (data.tanggal as string) ?? "",
+                status: (data.status as FotoGaleri["status"]) ?? "published",
+              };
+            })
+            .sort((a, b) => b.tanggal.localeCompare(a.tanggal))
+        );
+      })
+      .catch(() => {
+        setGalat(
+          "Daftar foto tidak bisa dimuat. Periksa koneksi internet, lalu muat ulang halaman."
+        );
+      });
+  }, []);
+
+  useEffect(() => {
+    muatDaftar();
+  }, [muatDaftar]);
+
+  function pilihBerkas(b: File | null) {
+    setBerkas(b);
+    if (pratinjau) URL.revokeObjectURL(pratinjau);
+    setPratinjau(b ? URL.createObjectURL(b) : null);
+  }
+
+  async function unggah(e: React.FormEvent) {
+    e.preventDefault();
+    setGalat(null);
+    if (!berkas) {
+      setGalat("Pilih berkas foto terlebih dahulu.");
+      return;
+    }
+    if (!POLA_TANGGAL.test(tanggal)) {
+      setGalat("Tanggal kegiatan belum diisi dengan benar.");
+      return;
+    }
+    setMengunggah(true);
+    try {
+      const url = await unggahFotoKeCloudinary(berkas);
+      await addDoc(collection(getDb(), "galeri"), {
+        url,
+        caption: caption.trim(),
+        tanggal,
+        status: tayang ? "published" : "draft",
+        dibuatPada: serverTimestamp(),
+      });
+      setCaption("");
+      setTanggal(tanggalHariIni());
+      setTayang(true);
+      pilihBerkas(null);
+      if (inputBerkas.current) inputBerkas.current.value = "";
+      muatDaftar();
+    } catch (err) {
+      setGalat(
+        err instanceof Error
+          ? err.message
+          : "Foto gagal diunggah. Periksa koneksi internet, lalu coba lagi."
+      );
+    } finally {
+      setMengunggah(false);
+    }
+  }
+
+  async function hapus(foto: FotoGaleri) {
+    const yakin = window.confirm(
+      `Hapus foto${foto.caption ? ` "${foto.caption}"` : " ini"} dari galeri?\nTindakan ini tidak bisa dibatalkan.`
+    );
+    if (!yakin) return;
+    try {
+      await deleteDoc(doc(getDb(), "galeri", foto.id));
+      muatDaftar();
+    } catch {
+      setGalat("Foto gagal dihapus. Coba lagi.");
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-display text-4xl text-tinta">Galeri Kegiatan</h1>
+        <Link
+          href="/admin"
+          className="text-base font-medium text-emas-tua underline decoration-2 underline-offset-4 hover:text-tinta"
+        >
+          <span aria-hidden="true">&larr;</span> Kembali ke renungan
+        </Link>
+      </div>
+
+      {!cloudinarySiap() && (
+        <p role="alert" className="mt-6 rounded-lg bg-merah-muda px-4 py-3 text-merah">
+          Cloudinary belum dikonfigurasi. Isi{" "}
+          <code>NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME</code> di <code>.env</code>{" "}
+          agar foto bisa diunggah.
+        </p>
+      )}
+
+      {/* Formulir unggah */}
+      <form onSubmit={unggah} className="mt-8 space-y-6 rounded-xl bg-krem px-6 py-8">
+        <h2 className="font-display text-2xl text-tinta">Unggah Foto Baru</h2>
+
+        <div>
+          <label htmlFor="foto" className="mb-2 block text-lg font-medium text-tinta">
+            Pilih foto
+          </label>
+          <input
+            id="foto"
+            type="file"
+            accept="image/*"
+            required
+            ref={inputBerkas}
+            onChange={(e) => pilihBerkas(e.target.files?.[0] ?? null)}
+            className={`${kelasInput} file:mr-4 file:rounded-md file:border-0 file:bg-emas-muda file:px-4 file:py-2 file:font-medium file:text-emas-tua`}
+          />
+          {pratinjau && (
+            // eslint-disable-next-line @next/next/no-img-element -- pratinjau lokal sementara (blob), bukan konten situs
+            <img
+              src={pratinjau}
+              alt="Pratinjau foto yang akan diunggah"
+              className="mt-4 max-h-56 rounded-lg border border-krem-tua object-contain"
+            />
+          )}
+        </div>
+
+        <div>
+          <label htmlFor="caption" className="mb-2 block text-lg font-medium text-tinta">
+            Keterangan <span className="font-normal text-abu">(caption)</span>
+          </label>
+          <textarea
+            id="caption"
+            rows={2}
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            placeholder="Contoh: Doa Koronka bersama di Gereja Santo Agustinus, April 2026"
+            className={kelasInput}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-end gap-6">
+          <div>
+            <label htmlFor="tanggal-foto" className="mb-2 block text-lg font-medium text-tinta">
+              Tanggal kegiatan
+            </label>
+            <input
+              id="tanggal-foto"
+              type="date"
+              required
+              value={tanggal}
+              onChange={(e) => setTanggal(e.target.value)}
+              className={`${kelasInput} max-w-xs`}
+            />
+          </div>
+          <label className="flex min-h-13 cursor-pointer items-center gap-3 text-lg font-medium text-tinta">
+            <input
+              type="checkbox"
+              checked={tayang}
+              onChange={(e) => setTayang(e.target.checked)}
+              className="h-6 w-6 accent-emas-tua"
+            />
+            Tayangkan segera
+          </label>
+        </div>
+
+        {galat && (
+          <p role="alert" className="rounded-lg bg-merah-muda px-4 py-3 text-merah">
+            {galat}
+          </p>
+        )}
+
+        <button type="submit" disabled={mengunggah || !cloudinarySiap()} className={kelasTombolUtama}>
+          {mengunggah ? "Mengunggah…" : "Unggah Foto"}
+        </button>
+        <p className="text-base text-abu">
+          Foto disimpan di Cloudinary, keterangannya di Firestore. Hilangkan
+          centang &ldquo;Tayangkan&rdquo; untuk menyimpan sebagai draft.
+        </p>
+      </form>
+
+      {/* Daftar foto */}
+      <h2 className="mt-12 font-display text-2xl text-tinta">
+        Foto yang Sudah Ada
+      </h2>
+
+      {daftar === null ? (
+        <p className="mt-6 text-abu">Memuat daftar foto&hellip;</p>
+      ) : daftar.length === 0 ? (
+        <div className="mt-6 rounded-xl bg-krem px-6 py-10 text-center text-tinta-muda">
+          <p>Belum ada foto di galeri.</p>
+          <p className="mt-2">Unggah foto pertama lewat formulir di atas.</p>
+        </div>
+      ) : (
+        <ul className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          {daftar.map((f) => (
+            <li
+              key={f.id}
+              className="flex gap-4 rounded-xl border border-krem-tua bg-putih p-4"
+            >
+              <span className="relative block h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-krem-tua">
+                <Image
+                  src={f.url}
+                  alt={f.caption || "Foto galeri"}
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-lg font-medium text-tinta">
+                  {f.caption || "(tanpa keterangan)"}
+                </p>
+                {f.tanggal && (
+                  <p className="text-base text-abu">
+                    {POLA_TANGGAL.test(f.tanggal)
+                      ? formatTanggalPanjang(f.tanggal)
+                      : f.tanggal}
+                  </p>
+                )}
+                <p
+                  className={`mt-1 inline-block rounded-md px-2.5 py-0.5 text-base font-medium ${
+                    f.status === "published"
+                      ? "bg-emas-muda text-emas-tua"
+                      : "bg-krem-tua text-abu"
+                  }`}
+                >
+                  {f.status === "published" ? "Tayang" : "Draft"}
+                </p>
+                <div className="mt-2">
+                  <button
+                    type="button"
+                    onClick={() => hapus(f)}
+                    className="font-medium text-merah underline decoration-2 underline-offset-4 hover:text-tinta"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export default function HalamanAdminGaleri() {
+  return <GerbangPengurus>{() => <KelolaGaleri />}</GerbangPengurus>;
+}
