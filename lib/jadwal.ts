@@ -4,38 +4,43 @@
  */
 
 export type JadwalRutin = {
-  /** Sorotan waktu/frekuensi yang ditampilkan besar di kiri, mis. "14.00 WIB" */
-  sorotan: string;
+  /** Kapan dilaksanakan: hari ke-berapa/frekuensi, mis. "Setiap hari", "Kamis ke-2" */
+  kapan: string;
+  /** Jam pelaksanaan, mis. "18.00 WIB". Dikosongkan bila tidak ditentukan. */
+  jam?: string;
   kegiatan: string;
   keterangan: string;
 };
 
 export const jadwalRutinKomunitas: JadwalRutin[] = [
   {
-    sorotan: "14.00 WIB",
+    kapan: "Setiap hari",
+    jam: "14.00 WIB",
     kegiatan: "Doa Koronka Satu Hati",
-    keterangan: "Setiap hari \u00b7 WhatsApp grup KKI Karawaci",
+    keterangan: "WhatsApp grup KKI Karawaci",
   },
   {
-    sorotan: "Kamis ke-2",
+    kapan: "Kamis ke-2",
     kegiatan: "Doa Koronka via Zoom",
-    keterangan: "Setiap Kamis kedua \u00b7 melalui Zoom (daring)",
+    keterangan: "Melalui Zoom (daring)",
   },
   {
-    sorotan: "18.00 WIB",
+    kapan: "Kamis ke-3",
+    jam: "18.00 WIB",
     kegiatan: "Misa Kerahiman Ilahi",
     keterangan:
-      "Setiap Kamis ketiga \u00b7 Gereja Santo Agustinus, didahului doa Koronka pukul 17.30",
+      "Gereja Santo Agustinus, didahului doa Koronka pukul 17.30",
   },
   {
-    sorotan: "14.50 WIB",
+    kapan: "Kamis ke-4",
+    jam: "14.50 WIB",
     kegiatan: "Ibadat Kerahiman Ilahi",
-    keterangan: "Setiap Kamis keempat \u00b7 Gereja Santo Agustinus",
+    keterangan: "Gereja Santo Agustinus",
   },
   {
-    sorotan: "14.50 WIB",
+    kapan: "Kamis ke-4 / ke-1",
+    jam: "14.50 WIB",
     kegiatan: "Ibadat Kerahiman Ilahi Stasi Santo Petrus",
-    keterangan:
-      "Kamis keempat/pertama, dua bulan sekali \u00b7 Stasi Santo Petrus",
+    keterangan: "Dua bulan sekali \u00b7 Stasi Santo Petrus",
   },
 ];

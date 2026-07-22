@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import heroImg from "@/public/hero.jpg";
+import { ItemJadwal } from "@/components/jadwal-item";
 import { Muncul } from "@/components/muncul";
 import { TautanTeks, TautanTombol } from "@/components/tombol";
 import { ambilGaleriPublik } from "@/lib/galeri";
@@ -192,18 +193,7 @@ export default async function Beranda() {
           </h2>
           <ul className="mt-8 divide-y divide-krem-tua">
             {jadwalRutinKomunitas.map((j) => (
-              <li
-                key={j.kegiatan}
-                className="flex flex-col gap-1 py-5 sm:flex-row sm:items-baseline sm:gap-8"
-              >
-                <p className="w-40 shrink-0 font-display text-2xl text-emas-tua">
-                  {j.sorotan}
-                </p>
-                <div>
-                  <p className="text-xl font-medium text-tinta">{j.kegiatan}</p>
-                  <p className="text-tinta-muda">{j.keterangan}</p>
-                </div>
-              </li>
+              <ItemJadwal key={j.kegiatan} jadwal={j} />
             ))}
           </ul>
           <div className="mt-6">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ItemJadwal } from "@/components/jadwal-item";
 import { Muncul } from "@/components/muncul";
 import { jadwalRutinKomunitas } from "@/lib/jadwal";
 
@@ -143,28 +144,16 @@ export default function DevosiJadwal() {
             Jadwal Rutin Komunitas
           </h2>
           <ul className="mt-6 divide-y divide-krem-tua">
-            <li className="flex flex-col gap-1 py-5 sm:flex-row sm:items-baseline sm:gap-8">
-              <p className="w-40 shrink-0 font-display text-2xl text-emas-tua">15.00 WIB</p>
-              <div>
-                <p className="text-xl font-medium text-tinta">Jam Kerahiman</p>
-                <p className="text-tinta-muda">
-                  Setiap hari, secara pribadi di mana pun berada.
-                </p>
-              </div>
-            </li>
+            <ItemJadwal
+              jadwal={{
+                kapan: "Setiap hari",
+                jam: "15.00 WIB",
+                kegiatan: "Jam Kerahiman",
+                keterangan: "Secara pribadi di mana pun berada.",
+              }}
+            />
             {jadwalRutinKomunitas.map((j) => (
-              <li
-                key={j.kegiatan}
-                className="flex flex-col gap-1 py-5 sm:flex-row sm:items-baseline sm:gap-8"
-              >
-                <p className="w-40 shrink-0 font-display text-2xl text-emas-tua">
-                  {j.sorotan}
-                </p>
-                <div>
-                  <p className="text-xl font-medium text-tinta">{j.kegiatan}</p>
-                  <p className="text-tinta-muda">{j.keterangan}</p>
-                </div>
-              </li>
+              <ItemJadwal key={j.kegiatan} jadwal={j} />
             ))}
           </ul>
         </Muncul>
