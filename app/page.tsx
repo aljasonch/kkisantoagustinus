@@ -3,7 +3,6 @@ import Link from "next/link";
 import heroImg from "@/public/hero.jpg";
 import { ItemJadwal } from "@/components/jadwal-item";
 import { Muncul } from "@/components/muncul";
-import { TombolShareRenungan } from "@/components/tombol-share-renungan";
 import { TautanTeks, TautanTombol } from "@/components/tombol";
 import { ambilGaleriPublik } from "@/lib/galeri";
 import { jadwalRutinKomunitas } from "@/lib/jadwal";
@@ -117,12 +116,10 @@ export default async function Beranda() {
               <p className="mx-auto mt-6 line-clamp-3 max-w-2xl">
                 {keParagraf(renungan.isiRenungan)[0]}
               </p>
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+              <div className="mt-6 text-center">
                 <TautanTeks href={`/renungan/${renungan.tanggal}`}>
                   Baca renungan lengkap
                 </TautanTeks>
-                <span className="text-krem-tua font-light">&middot;</span>
-                <TombolShareRenungan renungan={renungan} variasi="sekunder" label="Bagikan dengan Logo" />
               </div>
             </div>
           ) : (

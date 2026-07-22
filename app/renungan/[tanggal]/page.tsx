@@ -85,9 +85,6 @@ export default async function DetailRenungan(props: PageProps<"/renungan/[tangga
             oleh <span className="font-medium text-tinta-muda">{renungan.penulis}</span>
           </p>
         )}
-        <div className="mt-6">
-          <TombolShareRenungan renungan={renungan} variasi="utama" label="Bagikan Renungan dengan Logo" />
-        </div>
       </header>
 
       {renungan.gambarUrl && (
@@ -149,16 +146,6 @@ export default async function DetailRenungan(props: PageProps<"/renungan/[tangga
         </section>
       )}
 
-      {/* Bar Bagikan di bagian bawah artikel */}
-      <div className="mt-14 flex flex-col items-center justify-between gap-4 rounded-xl border border-krem-tua bg-krem p-6 text-center sm:flex-row sm:text-left">
-        <div>
-          <p className="font-display text-xl text-tinta">Bagikan Kerahiman Allah</p>
-          <p className="text-sm text-abu">
-            Bagikan kartu renungan harian berlogo KKI ini kepada sesama.
-          </p>
-        </div>
-        <TombolShareRenungan renungan={renungan} variasi="utama" label="Bagikan Kartu Renungan" />
-      </div>
     </article>
   );
 }
