@@ -7,6 +7,7 @@ import {
   doc,
   getDocs,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,7 +24,7 @@ import {
   POLA_TANGGAL,
   tanggalHariIni,
 } from "@/lib/renungan";
-import type { FotoGaleri } from "@/lib/galeri";
+import type { FotoGaleri, StatusGaleri } from "@/lib/galeri";
 
 function KelolaGaleri() {
   const [daftar, setDaftar] = useState<FotoGaleri[] | null>(null);
@@ -36,6 +37,7 @@ function KelolaGaleri() {
   const [mengunggah, setMengunggah] = useState(false);
   const [progres, setProgres] = useState("");
   const inputBerkas = useRef<HTMLInputElement>(null);
+  const [itemDiubah, setItemDiubah] = useState<FotoGaleri | null>(null);
 
   const muatDaftar = useCallback(() => {
     getDocs(collection(getDb(), "galeri"))
@@ -144,6 +146,12 @@ function KelolaGaleri() {
       setGalat("Foto gagal dihapus. Coba lagi.");
     }
   }
+
+  const tutupUbah = useCallback(() => setItemDiubah(null), []);
+  const selesaiUbah = useCallback(() => {
+    setItemDiubah(null);
+    muatDaftar();
+  }, [muatDaftar]);
 
   return (
     <div>
@@ -319,7 +327,14 @@ function KelolaGaleri() {
                 >
                   {f.status === "published" ? "Tayang" : "Draft"}
                 </p>
-                <div className="mt-2">
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                  <button
+                    type="button"
+                    onClick={() => setItemDiubah(f)}
+                    className="font-medium text-emas-tua underline decoration-2 underline-offset-4 hover:text-tinta"
+                  >
+                    Ubah
+                  </button>
                   <button
                     type="button"
                     onClick={() => hapus(f)}
@@ -333,10 +348,334 @@ function KelolaGaleri() {
           ))}
         </ul>
       )}
+
+      {itemDiubah && (
+        <FormUbahGaleri
+          key={itemDiubah.id}
+          item={itemDiubah}
+          onSelesai={selesaiUbah}
+          onBatal={tutupUbah}
+        />
+      )}
     </div>
   );
 }
 
 export default function HalamanAdminGaleri() {
   return <GerbangPengurus>{() => <KelolaGaleri />}</GerbangPengurus>;
+}
+
+/**
+ * Modal untuk mengubah item galeri yang sudah ada: mengubah keterangan,
+ * tanggal, dan status tayang; menambah foto baru; menghapus foto; serta
+ * memilih foto sampul. Foto baru diunggah ke Cloudinary saat disimpan.
+ */
+function FormUbahGaleri({
+  item,
+  onSelesai,
+  onBatal,
+}: {
+  item: FotoGaleri;
+  onSelesai: () => void;
+  onBatal: () => void;
+}) {
+  const [caption, setCaption] = useState(item.caption);
+  const [tanggal, setTanggal] = useState(item.tanggal);
+  const [status, setStatus] = useState<StatusGaleri>(item.status);
+  const [fotoUrls, setFotoUrls] = useState<string[]>(item.fotoUrls);
+  const [berkasBaru, setBerkasBaru] = useState<File[]>([]);
+  const [pratinjauBaru, setPratinjauBaru] = useState<string[]>([]);
+  const [menyimpan, setMenyimpan] = useState(false);
+  const [progres, setProgres] = useState("");
+  const [galat, setGalat] = useState("");
+  const inputBaru = useRef<HTMLInputElement>(null);
+  const pratinjauBaruRef = useRef<string[]>([]);
+
+  // Catat pratinjau terbaru, lalu bersihkan object URL saat komponen dilepas.
+  useEffect(() => {
+    pratinjauBaruRef.current = pratinjauBaru;
+  }, [pratinjauBaru]);
+  useEffect(() => {
+    return () => pratinjauBaruRef.current.forEach((u) => URL.revokeObjectURL(u));
+  }, []);
+
+  // Kunci gulir halaman; tombol Esc menutup modal.
+  useEffect(() => {
+    function tekanTombol(e: KeyboardEvent) {
+      if (e.key === "Escape") onBatal();
+    }
+    window.addEventListener("keydown", tekanTombol);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", tekanTombol);
+      document.body.style.overflow = "";
+    };
+  }, [onBatal]);
+
+  function tambahBerkas(daftar: FileList | null) {
+    const dipilih: File[] = daftar
+      ? Array.from(daftar).filter((f) => f.type.startsWith("image/"))
+      : [];
+    if (dipilih.length === 0) return;
+    setBerkasBaru((prev) => [...prev, ...dipilih]);
+    setPratinjauBaru((prev) => [
+      ...prev,
+      ...dipilih.map((f) => URL.createObjectURL(f)),
+    ]);
+    if (inputBaru.current) inputBaru.current.value = "";
+  }
+
+  function hapusBerkasBaru(i: number) {
+    URL.revokeObjectURL(pratinjauBaru[i]);
+    setBerkasBaru((prev) => prev.filter((_, idx) => idx !== i));
+    setPratinjauBaru((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function hapusFoto(i: number) {
+    setFotoUrls((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function jadikanSampul(i: number) {
+    setFotoUrls((prev) => {
+      const dipilih = prev[i];
+      const sisanya = prev.filter((_, idx) => idx !== i);
+      return [dipilih, ...sisanya];
+    });
+  }
+
+  async function simpan(e: React.FormEvent) {
+    e.preventDefault();
+    setGalat("");
+    if (fotoUrls.length === 0 && berkasBaru.length === 0) {
+      setGalat("Item harus memiliki minimal satu foto.");
+      return;
+    }
+    if (!POLA_TANGGAL.test(tanggal)) {
+      setGalat("Tanggal kegiatan belum diisi dengan benar.");
+      return;
+    }
+    setMenyimpan(true);
+    try {
+      const urlBaru: string[] = [];
+      for (let i = 0; i < berkasBaru.length; i += 1) {
+        setProgres(`Mengunggah foto ${i + 1} dari ${berkasBaru.length}…`);
+        urlBaru.push(await unggahFotoKeCloudinary(berkasBaru[i]));
+      }
+      const semuaUrl = [...fotoUrls, ...urlBaru];
+      await updateDoc(doc(getDb(), "galeri", item.id), {
+        url: semuaUrl[0],
+        fotoUrls: semuaUrl,
+        caption: caption.trim(),
+        tanggal,
+        status,
+      });
+      onSelesai();
+    } catch (err) {
+      setGalat(
+        err instanceof Error
+          ? err.message
+          : "Perubahan gagal disimpan. Periksa koneksi internet, lalu coba lagi."
+      );
+    } finally {
+      setMenyimpan(false);
+      setProgres("");
+    }
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Ubah item galeri"
+      className="fixed inset-0 z-[80] overflow-y-auto bg-tinta/70 p-4 sm:p-8"
+      onClick={onBatal}
+    >
+      <form
+        onSubmit={simpan}
+        onClick={(e) => e.stopPropagation()}
+        className="mx-auto my-4 w-full max-w-2xl space-y-6 rounded-2xl bg-putih p-6 shadow-xl sm:p-8"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="font-display text-2xl text-tinta">Ubah Item Galeri</h2>
+          <button
+            type="button"
+            onClick={onBatal}
+            aria-label="Tutup"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-krem text-2xl text-tinta hover:bg-krem-tua"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div>
+          <p className="mb-2 text-lg font-medium text-tinta">
+            Foto saat ini{" "}
+            <span className="font-normal text-abu">({fotoUrls.length})</span>
+          </p>
+          {fotoUrls.length === 0 ? (
+            <p className="rounded-lg bg-krem px-4 py-3 text-base text-abu">
+              Semua foto dihapus. Tambahkan foto baru di bawah agar item tetap
+              valid.
+            </p>
+          ) : (
+            <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {fotoUrls.map((src, i) => (
+                <li
+                  key={src}
+                  className="overflow-hidden rounded-lg border border-krem-tua bg-krem"
+                >
+                  <span className="relative block aspect-square">
+                    <Image
+                      src={src}
+                      alt={`Foto galeri ${i + 1}`}
+                      fill
+                      sizes="(max-width: 640px) 33vw, 25vw"
+                      className="object-cover"
+                    />
+                  </span>
+                  <div className="flex items-center justify-between gap-1 px-1.5 py-1">
+                    {i === 0 ? (
+                      <span className="text-xs font-medium text-emas-tua">
+                        Sampul
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => jadikanSampul(i)}
+                        className="text-xs font-medium text-emas-tua underline underline-offset-2 hover:text-tinta"
+                      >
+                        Jadikan sampul
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => hapusFoto(i)}
+                      className="text-xs font-medium text-merah underline underline-offset-2 hover:text-tinta"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="foto-baru"
+            className="mb-2 block text-lg font-medium text-tinta"
+          >
+            Tambah foto baru
+          </label>
+          <input
+            id="foto-baru"
+            type="file"
+            accept="image/*"
+            multiple
+            ref={inputBaru}
+            onChange={(e) => tambahBerkas(e.target.files)}
+            disabled={!cloudinarySiap()}
+            className={`${kelasInput} file:mr-4 file:rounded-md file:border-0 file:bg-emas-muda file:px-4 file:py-2 file:font-medium file:text-emas-tua`}
+          />
+          {pratinjauBaru.length > 0 && (
+            <ul className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {pratinjauBaru.map((src, i) => (
+                <li
+                  key={src}
+                  className="overflow-hidden rounded-lg border border-krem-tua bg-krem"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- pratinjau lokal sementara (blob), bukan konten situs */}
+                  <img
+                    src={src}
+                    alt={`Foto baru ${i + 1}`}
+                    className="aspect-square w-full object-cover"
+                  />
+                  <div className="px-1.5 py-1">
+                    <button
+                      type="button"
+                      onClick={() => hapusBerkasBaru(i)}
+                      className="text-xs font-medium text-merah underline underline-offset-2 hover:text-tinta"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="caption-ubah"
+            className="mb-2 block text-lg font-medium text-tinta"
+          >
+            Keterangan <span className="font-normal text-abu">(caption)</span>
+          </label>
+          <textarea
+            id="caption-ubah"
+            rows={2}
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            className={kelasInput}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-end gap-6">
+          <div>
+            <label
+              htmlFor="tanggal-ubah"
+              className="mb-2 block text-lg font-medium text-tinta"
+            >
+              Tanggal kegiatan
+            </label>
+            <input
+              id="tanggal-ubah"
+              type="date"
+              required
+              value={tanggal}
+              onChange={(e) => setTanggal(e.target.value)}
+              className={`${kelasInput} max-w-xs`}
+            />
+          </div>
+          <label className="flex min-h-13 cursor-pointer items-center gap-3 text-lg font-medium text-tinta">
+            <input
+              type="checkbox"
+              checked={status === "published"}
+              onChange={(e) =>
+                setStatus(e.target.checked ? "published" : "draft")
+              }
+              className="h-6 w-6 accent-emas-tua"
+            />
+            Tayangkan
+          </label>
+        </div>
+
+        {galat && (
+          <p role="alert" className="rounded-lg bg-merah-muda px-4 py-3 text-merah">
+            {galat}
+          </p>
+        )}
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="submit"
+            disabled={menyimpan}
+            className={kelasTombolUtama}
+          >
+            {menyimpan ? progres || "Menyimpan…" : "Simpan Perubahan"}
+          </button>
+          <button
+            type="button"
+            onClick={onBatal}
+            disabled={menyimpan}
+            className="rounded-lg bg-krem px-6 py-3 text-lg font-medium text-tinta hover:bg-krem-tua"
+          >
+            Batal
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 }
