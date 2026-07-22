@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { TombolShareRenungan } from "@/components/tombol-share-renungan";
 import {
   ambilRenungan,
   formatTanggalPanjang,
@@ -64,14 +65,15 @@ export default async function DetailRenungan(props: PageProps<"/renungan/[tangga
 
   return (
     <article className="mx-auto max-w-3xl px-5 py-14">
-      <p>
+      <div className="flex items-center justify-between gap-4">
         <Link
           href="/renungan"
           className="font-medium text-emas-tua underline decoration-2 underline-offset-4 hover:text-tinta"
         >
           <span aria-hidden="true">&larr;</span> Semua renungan
         </Link>
-      </p>
+        <TombolShareRenungan renungan={renungan} variasi="sekunder" label="Bagikan" />
+      </div>
 
       <header className="mt-8 flex flex-col items-center text-center">
         <p className="text-abu">{formatTanggalPanjang(renungan.tanggal)}</p>
@@ -83,6 +85,9 @@ export default async function DetailRenungan(props: PageProps<"/renungan/[tangga
             oleh <span className="font-medium text-tinta-muda">{renungan.penulis}</span>
           </p>
         )}
+        <div className="mt-6">
+          <TombolShareRenungan renungan={renungan} variasi="utama" label="Bagikan Renungan dengan Logo" />
+        </div>
       </header>
 
       {renungan.gambarUrl && (
@@ -143,6 +148,18 @@ export default async function DetailRenungan(props: PageProps<"/renungan/[tangga
           <p className="mt-4 text-tinta">Amin.</p>
         </section>
       )}
+
+      {/* Bar Bagikan di bagian bawah artikel */}
+      <div className="mt-14 flex flex-col items-center justify-between gap-4 rounded-xl border border-krem-tua bg-krem p-6 text-center sm:flex-row sm:text-left">
+        <div>
+          <p className="font-display text-xl text-tinta">Bagikan Kerahiman Allah</p>
+          <p className="text-sm text-abu">
+            Bagikan kartu renungan harian berlogo KKI ini kepada sesama.
+          </p>
+        </div>
+        <TombolShareRenungan renungan={renungan} variasi="utama" label="Bagikan Kartu Renungan" />
+      </div>
     </article>
   );
 }
+

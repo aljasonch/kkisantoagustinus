@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Muncul } from "@/components/muncul";
+import { TombolShareRenungan } from "@/components/tombol-share-renungan";
 import { ambilArsipRenungan, formatTanggalPanjang } from "@/lib/renungan";
 
 export const metadata: Metadata = {
@@ -27,10 +28,10 @@ export default async function ArsipRenungan() {
         <Muncul>
           <ul className="mt-10 divide-y divide-krem-tua">
             {arsip.map((r) => (
-              <li key={r.tanggal}>
+              <li key={r.tanggal} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 hover:bg-krem sm:rounded-lg sm:px-4 sm:-mx-4 group">
                 <Link
                   href={`/renungan/${r.tanggal}`}
-                  className="group flex gap-5 py-6 hover:bg-krem sm:rounded-lg sm:px-4 sm:-mx-4"
+                  className="flex gap-5 min-w-0 flex-1"
                 >
                   {r.gambarUrl && (
                     <span className="relative block h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-krem-tua bg-krem-tua">
@@ -59,6 +60,9 @@ export default async function ArsipRenungan() {
                     )}
                   </div>
                 </Link>
+                <div className="shrink-0 self-start sm:self-center pt-2 sm:pt-0">
+                  <TombolShareRenungan renungan={r} variasi="sekunder" label="Bagikan" />
+                </div>
               </li>
             ))}
           </ul>

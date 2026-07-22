@@ -38,7 +38,7 @@ export const jadwalRutinKomunitas: JadwalRutin[] = [
     keterangan: "Gereja Santo Agustinus",
   },
   {
-    kapan: "Kamis ke-4 / ke-1",
+    kapan: "Kamis ke-5 / ke-1",
     jam: "14.50 WIB",
     kegiatan: "Ibadat Kerahiman Ilahi Stasi Santo Petrus",
     keterangan: "Dua bulan sekali \u00b7 Stasi Santo Petrus",
