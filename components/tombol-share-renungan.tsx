@@ -120,14 +120,14 @@ function ModalShareRenungan({
     ctx.fillRect(0, 0, width, height);
 
     // Bingkai Ganda Emas
-    const pad = 36;
+    const pad = 40;
     ctx.strokeStyle = "#E6D9B4";
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 6;
     ctx.strokeRect(pad, pad, width - pad * 2, height - pad * 2);
 
     ctx.strokeStyle = "#8A6D1F";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(pad + 10, pad + 10, width - (pad + 10) * 2, height - (pad + 10) * 2);
+    ctx.lineWidth = 3;
+    ctx.strokeRect(pad + 12, pad + 12, width - (pad + 12) * 2, height - (pad + 12) * 2);
 
     // Muat Logo KKI
     const logo = new window.Image();
@@ -138,49 +138,45 @@ function ModalShareRenungan({
       logo.src = "/logo_kki.png";
     });
 
-    let currentY = isStory ? 140 : 80;
+    let currentY = isStory ? 280 : 120;
 
     // Gambar Logo di tengah atas
     if (logo.complete && logo.naturalWidth > 0) {
-      const logoH = 110;
+      const logoH = 160;
       const logoW = (logo.naturalWidth / logo.naturalHeight) * logoH;
       ctx.drawImage(logo, (width - logoW) / 2, currentY, logoW, logoH);
-      currentY += logoH + 20;
+      currentY += logoH + (isStory ? 60 : 30);
     } else {
-      currentY += 20;
+      currentY += isStory ? 80 : 40;
     }
 
     // Teks Komunitas Header
     ctx.textAlign = "center";
     ctx.fillStyle = "#8A6D1F";
-    ctx.font = "bold 24px serif";
+    ctx.font = "bold 34px serif";
     ctx.fillText("KOMUNITAS KERAHIMAN ILAHI", width / 2, currentY);
-    currentY += 32;
+    currentY += isStory ? 60 : 40;
 
     ctx.fillStyle = "#5C534E";
-    ctx.font = "20px sans-serif";
+    ctx.font = "26px sans-serif";
     ctx.fillText("Paroki Karawaci · Gereja Santo Agustinus", width / 2, currentY);
-    currentY += 40;
+    currentY += isStory ? 80 : 50;
 
     // Garis Pemisah Emas
     ctx.strokeStyle = "#B08D2E";
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(width / 2 - 120, currentY);
-    ctx.lineTo(width / 2 + 120, currentY);
+    ctx.moveTo(width / 2 - 160, currentY);
+    ctx.lineTo(width / 2 + 160, currentY);
     ctx.stroke();
-    currentY += 45;
+    currentY += isStory ? 90 : 60;
 
     // Tanggal
     ctx.fillStyle = "#5C534E";
-    ctx.font = "italic 22px sans-serif";
+    ctx.font = "italic 32px sans-serif";
     ctx.fillText(tanggalPanjang, width / 2, currentY);
-    currentY += 45;
+    currentY += isStory ? 90 : 60;
 
-    // Judul Renungan
-    ctx.fillStyle = "#2B2320";
-    ctx.font = "bold 38px serif";
-    
     // Helper Wrap Text
     const wrapText = (
       text: string,
@@ -215,139 +211,136 @@ function ModalShareRenungan({
       return lines.length * lineHeight;
     };
 
-    const maxTextWidth = width - 200;
+    // Judul Renungan
+    const maxTextWidth = width - 160;
     const heightJudul = wrapText(
       judulRenungan,
       width / 2,
       currentY,
       maxTextWidth,
-      48,
-      "bold 36px serif",
+      68,
+      "bold 56px serif",
       "#2B2320"
     );
-    currentY += heightJudul + 25;
+    currentY += heightJudul + (isStory ? 30 : 20);
 
     // Kutipan Ayat / Faustina / Paragraf utama
     if (renungan.ayat) {
       // Box Kutipan Ayat
       ctx.fillStyle = "#F3ECDD";
-      const boxMargin = 90;
+      const boxMargin = 80;
       const boxW = width - boxMargin * 2;
       
       // Ukur tinggi teks ayat lebih dulu
       const textAyat = `“${renungan.ayat}”`;
-      ctx.font = "italic 26px serif";
+      ctx.font = "italic 40px serif";
       const words = textAyat.split(" ");
       let tempLine = "";
       let lineCount = 1;
       for (let w of words) {
-        if (ctx.measureText(tempLine + w + " ").width > boxW - 60) {
+        if (ctx.measureText(tempLine + w + " ").width > boxW - 100) {
           lineCount++;
           tempLine = w + " ";
         } else {
           tempLine += w + " ";
         }
       }
-      const ayatTextHeight = lineCount * 36;
-      const boxH = ayatTextHeight + (renungan.referensiAyat ? 60 : 40);
+      const ayatTextHeight = lineCount * 56;
+      const boxH = ayatTextHeight + (renungan.referensiAyat ? 100 : 70);
 
       // Gambar background box
       ctx.beginPath();
-      ctx.roundRect((width - boxW) / 2, currentY, boxW, boxH, 16);
+      ctx.roundRect((width - boxW) / 2, currentY, boxW, boxH, 20);
       ctx.fill();
 
       // Gambar teks ayat di dalam box
-      let boxTextY = currentY + 40;
+      let boxTextY = currentY + 65;
       wrapText(
         textAyat,
         width / 2,
         boxTextY,
-        boxW - 60,
-        36,
-        "italic 26px serif",
+        boxW - 100,
+        56,
+        "italic 40px serif",
         "#2B2320"
       );
 
       if (renungan.referensiAyat) {
-        ctx.font = "bold 22px sans-serif";
+        ctx.font = "bold 28px sans-serif";
         ctx.fillStyle = "#9E3B33";
-        ctx.fillText(renungan.referensiAyat, width / 2, boxTextY + ayatTextHeight + 10);
+        ctx.fillText(renungan.referensiAyat, width / 2, boxTextY + ayatTextHeight + 5);
       }
 
-      currentY += boxH + 35;
+      currentY += boxH + 40;
     } else if (renungan.kutipanFaustina) {
       // Box Faustina
       ctx.fillStyle = "#2B2320";
-      const boxMargin = 90;
+      const boxMargin = 80;
       const boxW = width - boxMargin * 2;
       const textKutipan = `“${renungan.kutipanFaustina}”`;
       
-      ctx.font = "24px serif";
+      ctx.font = "36px serif";
       const words = textKutipan.split(" ");
       let tempLine = "";
       let lineCount = 1;
       for (let w of words) {
-        if (ctx.measureText(tempLine + w + " ").width > boxW - 60) {
+        if (ctx.measureText(tempLine + w + " ").width > boxW - 100) {
           lineCount++;
           tempLine = w + " ";
         } else {
           tempLine += w + " ";
         }
       }
-      const textH = lineCount * 36;
-      const boxH = textH + 70;
+      const textH = lineCount * 52;
+      const boxH = textH + 110;
 
       ctx.beginPath();
-      ctx.roundRect((width - boxW) / 2, currentY, boxW, boxH, 16);
+      ctx.roundRect((width - boxW) / 2, currentY, boxW, boxH, 20);
       ctx.fill();
 
-      let boxTextY = currentY + 40;
+      let boxTextY = currentY + 65;
       wrapText(
         textKutipan,
         width / 2,
         boxTextY,
-        boxW - 60,
-        36,
-        "24px serif",
+        boxW - 100,
+        52,
+        "36px serif",
         "#FAF6EE"
       );
 
-      ctx.font = "bold 18px sans-serif";
+      ctx.font = "bold 24px sans-serif";
       ctx.fillStyle = "#E6D9B4";
-      ctx.fillText("BUKU HARIAN SANTA FAUSTINA", width / 2, boxTextY + textH + 15);
+      ctx.fillText("BUKU HARIAN SANTA FAUSTINA", width / 2, boxTextY + textH + 10);
 
-      currentY += boxH + 35;
+      currentY += boxH + 40;
     } else if (paragrafUtama) {
       // Ringkasan paragraf jika tidak ada ayat/kutipan
-      const dipotong = paragrafUtama.length > 220 ? paragrafUtama.slice(0, 220) + "…" : paragrafUtama;
+      const dipotong = paragrafUtama.length > 250 ? paragrafUtama.slice(0, 250) + "…" : paragrafUtama;
       const heightPar = wrapText(
         dipotong,
         width / 2,
         currentY,
         maxTextWidth,
-        34,
-        "24px sans-serif",
+        48,
+        "32px sans-serif",
         "#4A413C"
       );
-      currentY += heightPar + 30;
+      currentY += heightPar + 40;
     }
 
-    // Footer Semboyan & Website (di bagian paling bawah canvas)
-    const footerY = height - (isStory ? 150 : 100);
+    // Footer Semboyan (di bagian paling bawah canvas)
+    const footerY = height - (isStory ? 200 : 120);
     ctx.strokeStyle = "#E6D9B4";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(width / 2 - 180, footerY - 30);
-    ctx.lineTo(width / 2 + 180, footerY - 30);
+    ctx.moveTo(width / 2 - 220, footerY - 50);
+    ctx.lineTo(width / 2 + 220, footerY - 50);
     ctx.stroke();
 
     ctx.fillStyle = "#9E3B33";
-    ctx.font = "bold italic 26px serif";
+    ctx.font = "bold italic 38px serif";
     ctx.fillText("“Yesus, Engkau Andalanku”", width / 2, footerY);
-
-    ctx.fillStyle = "#5C534E";
-    ctx.font = "18px sans-serif";
-    ctx.fillText("kkisantoagustinus.com", width / 2, footerY + 30);
 
     return new Promise((resolve) => {
       canvas.toBlob((blob) => resolve(blob), "image/png", 0.95);
