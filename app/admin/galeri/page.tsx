@@ -31,9 +31,10 @@ function KelolaGaleri() {
   const [caption, setCaption] = useState("");
   const [tanggal, setTanggal] = useState(tanggalHariIni());
   const [tayang, setTayang] = useState(true);
-  const [berkas, setBerkas] = useState<File | null>(null);
-  const [pratinjau, setPratinjau] = useState<string | null>(null);
+  const [berkas, setBerkas] = useState<File[]>([]);
+  const [pratinjau, setPratinjau] = useState<string[]>([]);
   const [mengunggah, setMengunggah] = useState(false);
+  const [progres, setProgres] = useState("");
   const inputBerkas = useRef<HTMLInputElement>(null);
 
   const muatDaftar = useCallback(() => {
@@ -43,9 +44,17 @@ function KelolaGaleri() {
           snap.docs
             .map((d) => {
               const data = d.data();
+              const urlTunggal = (data.url as string) ?? "";
+              const fotoUrls =
+                Array.isArray(data.fotoUrls) && data.fotoUrls.length > 0
+                  ? (data.fotoUrls as string[])
+                  : urlTunggal
+                    ? [urlTunggal]
+                    : [];
               return {
                 id: d.id,
-                url: (data.url as string) ?? "",
+                url: urlTunggal || fotoUrls[0] || "",
+                fotoUrls,
                 caption: (data.caption as string) ?? "",
                 tanggal: (data.tanggal as string) ?? "",
                 status: (data.status as FotoGaleri["status"]) ?? "published",
@@ -65,17 +74,24 @@ function KelolaGaleri() {
     muatDaftar();
   }, [muatDaftar]);
 
-  function pilihBerkas(b: File | null) {
-    setBerkas(b);
-    if (pratinjau) URL.revokeObjectURL(pratinjau);
-    setPratinjau(b ? URL.createObjectURL(b) : null);
+  function pilihBerkas(daftar: FileList | null) {
+    const dipilih: File[] = daftar
+      ? Array.from(daftar).filter((f) => f.type.startsWith("image/"))
+      : [];
+    setBerkas(dipilih);
+    setPratinjau(dipilih.map((f) => URL.createObjectURL(f)));
   }
+
+  // Buang object URL pratinjau saat pilihan berganti atau komponen dilepas.
+  useEffect(() => {
+    return () => pratinjau.forEach((u) => URL.revokeObjectURL(u));
+  }, [pratinjau]);
 
   async function unggah(e: React.FormEvent) {
     e.preventDefault();
     setGalat(null);
-    if (!berkas) {
-      setGalat("Pilih berkas foto terlebih dahulu.");
+    if (berkas.length === 0) {
+      setGalat("Pilih minimal satu foto terlebih dahulu.");
       return;
     }
     if (!POLA_TANGGAL.test(tanggal)) {
@@ -84,9 +100,14 @@ function KelolaGaleri() {
     }
     setMengunggah(true);
     try {
-      const url = await unggahFotoKeCloudinary(berkas);
+      const urls: string[] = [];
+      for (let i = 0; i < berkas.length; i += 1) {
+        setProgres(`Mengunggah foto ${i + 1} dari ${berkas.length}…`);
+        urls.push(await unggahFotoKeCloudinary(berkas[i]));
+      }
       await addDoc(collection(getDb(), "galeri"), {
-        url,
+        url: urls[0],
+        fotoUrls: urls,
         caption: caption.trim(),
         tanggal,
         status: tayang ? "published" : "draft",
@@ -95,7 +116,8 @@ function KelolaGaleri() {
       setCaption("");
       setTanggal(tanggalHariIni());
       setTayang(true);
-      pilihBerkas(null);
+      setBerkas([]);
+      setPratinjau([]);
       if (inputBerkas.current) inputBerkas.current.value = "";
       muatDaftar();
     } catch (err) {
@@ -106,12 +128,13 @@ function KelolaGaleri() {
       );
     } finally {
       setMengunggah(false);
+      setProgres("");
     }
   }
 
   async function hapus(foto: FotoGaleri) {
     const yakin = window.confirm(
-      `Hapus foto${foto.caption ? ` "${foto.caption}"` : " ini"} dari galeri?\nTindakan ini tidak bisa dibatalkan.`
+      `Hapus item galeri${foto.caption ? ` "${foto.caption}"` : " ini"} (${foto.fotoUrls.length} foto) dari galeri?\nTindakan ini tidak bisa dibatalkan.`
     );
     if (!yakin) return;
     try {
@@ -148,24 +171,45 @@ function KelolaGaleri() {
 
         <div>
           <label htmlFor="foto" className="mb-2 block text-lg font-medium text-tinta">
-            Pilih foto
+            Pilih foto{" "}
+            <span className="font-normal text-abu">(bisa lebih dari satu)</span>
           </label>
           <input
             id="foto"
             type="file"
             accept="image/*"
+            multiple
             required
             ref={inputBerkas}
-            onChange={(e) => pilihBerkas(e.target.files?.[0] ?? null)}
+            onChange={(e) => pilihBerkas(e.target.files)}
             className={`${kelasInput} file:mr-4 file:rounded-md file:border-0 file:bg-emas-muda file:px-4 file:py-2 file:font-medium file:text-emas-tua`}
           />
-          {pratinjau && (
-            // eslint-disable-next-line @next/next/no-img-element -- pratinjau lokal sementara (blob), bukan konten situs
-            <img
-              src={pratinjau}
-              alt="Pratinjau foto yang akan diunggah"
-              className="mt-4 max-h-56 rounded-lg border border-krem-tua object-contain"
-            />
+          {pratinjau.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-base text-abu">
+                {berkas.length} foto dipilih, foto pertama menjadi sampul.
+              </p>
+              <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                {pratinjau.map((src, i) => (
+                  <li
+                    key={src}
+                    className="relative aspect-square overflow-hidden rounded-lg border border-krem-tua bg-krem"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- pratinjau lokal sementara (blob), bukan konten situs */}
+                    <img
+                      src={src}
+                      alt={`Pratinjau foto ${i + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                    {i === 0 && (
+                      <span className="absolute left-1 top-1 rounded bg-tinta/70 px-1.5 py-0.5 text-xs font-medium text-putih">
+                        Sampul
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
 
@@ -215,11 +259,12 @@ function KelolaGaleri() {
         )}
 
         <button type="submit" disabled={mengunggah || !cloudinarySiap()} className={kelasTombolUtama}>
-          {mengunggah ? "Mengunggah…" : "Unggah Foto"}
+          {mengunggah ? progres || "Mengunggah…" : "Unggah Foto"}
         </button>
         <p className="text-base text-abu">
-          Foto disimpan di Cloudinary, keterangannya di Firestore. Hilangkan
-          centang &ldquo;Tayangkan&rdquo; untuk menyimpan sebagai draft.
+          Semua foto yang dipilih disimpan sebagai satu item di Cloudinary,
+          keterangannya di Firestore. Hilangkan centang &ldquo;Tayangkan&rdquo;
+          untuk menyimpan sebagai draft.
         </p>
       </form>
 
@@ -260,6 +305,9 @@ function KelolaGaleri() {
                     {POLA_TANGGAL.test(f.tanggal)
                       ? formatTanggalPanjang(f.tanggal)
                       : f.tanggal}
+                    {f.fotoUrls.length > 1 && (
+                      <> &middot; {f.fotoUrls.length} foto</>
+                    )}
                   </p>
                 )}
                 <p

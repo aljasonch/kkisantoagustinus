@@ -5,8 +5,10 @@ export type StatusGaleri = "draft" | "published";
 
 export type FotoGaleri = {
   id: string;
-  /** URL gambar di Cloudinary */
+  /** URL foto sampul (foto pertama dalam item) */
   url: string;
+  /** Semua URL foto dalam item ini: satu item bisa berisi banyak foto */
+  fotoUrls: string[];
   caption: string;
   /** Format YYYY-MM-DD: tanggal kegiatan, dipakai untuk mengurutkan */
   tanggal: string;
@@ -14,9 +16,18 @@ export type FotoGaleri = {
 };
 
 function keFotoGaleri(id: string, data: Record<string, unknown>): FotoGaleri {
+  const urlTunggal = (data.url as string) ?? "";
+  // Dokumen lama hanya punya `url` (satu foto); dokumen baru punya `fotoUrls`.
+  const fotoUrls =
+    Array.isArray(data.fotoUrls) && data.fotoUrls.length > 0
+      ? (data.fotoUrls as string[])
+      : urlTunggal
+        ? [urlTunggal]
+        : [];
   return {
     id,
-    url: (data.url as string) ?? "",
+    url: urlTunggal || fotoUrls[0] || "",
+    fotoUrls,
     caption: (data.caption as string) ?? "",
     tanggal: (data.tanggal as string) ?? "",
     status: (data.status as StatusGaleri) ?? "published",
