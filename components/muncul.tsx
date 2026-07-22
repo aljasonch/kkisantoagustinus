@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 
 /**
  * Memunculkan isinya dengan fade-in lembut saat masuk viewport.
- * Tanpa JavaScript (atau dengan prefers-reduced-motion) konten tetap
- * terlihat normal; kelas penyembunyi baru dipasang setelah mount.
+ * Bila elemen sudah berada di dalam/dekat viewport saat halaman dimuat,
+ * elemen langsung ditampilkan tanpa efek berkedip atau menghilang.
  */
 export function Muncul({
   children,
@@ -21,7 +21,6 @@ export function Muncul({
     if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    el.classList.add("muncul-siap");
     const pengamat = new IntersectionObserver(
       ([entri]) => {
         if (entri.isIntersecting) {
@@ -29,9 +28,20 @@ export function Muncul({
           pengamat.disconnect();
         }
       },
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
+      { threshold: 0.05, rootMargin: "0px 0px 50px 0px" }
     );
-    pengamat.observe(el);
+
+    // Cek posisi elemen terhadap viewport saat pertama dimuat
+    const rect = el.getBoundingClientRect();
+    const diViewport = rect.top < window.innerHeight + 100 && rect.bottom > -50;
+
+    if (diViewport) {
+      el.classList.add("muncul-siap", "muncul-tampil");
+    } else {
+      el.classList.add("muncul-siap");
+      pengamat.observe(el);
+    }
+
     return () => pengamat.disconnect();
   }, []);
 
@@ -41,3 +51,4 @@ export function Muncul({
     </div>
   );
 }
+
