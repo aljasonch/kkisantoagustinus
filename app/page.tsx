@@ -86,16 +86,15 @@ export default async function Beranda() {
           {renungan ? (
             <div className="mt-8">
               {renungan.gambarUrl && (
-                <div className="mx-auto w-full max-w-md rounded-xl border border-krem-tua bg-putih p-2 shadow-sm">
-                  <div className="relative aspect-[4/3] w-full">
-                    <Image
-                      src={renungan.gambarUrl}
-                      alt=""
-                      fill
-                      sizes="(max-width: 768px) 90vw, 448px"
-                      className="object-contain"
-                    />
-                  </div>
+                <div className="mx-auto w-44 max-w-[80%] overflow-hidden rounded-xl border border-krem-tua shadow-sm sm:w-64">
+                  <Image
+                    src={renungan.gambarUrl}
+                    alt=""
+                    width={1200}
+                    height={900}
+                    sizes="(max-width: 768px) 90vw, 448px"
+                    className="h-auto w-full"
+                  />
                 </div>
               )}
               {renungan.judul && (
