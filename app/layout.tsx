@@ -62,6 +62,7 @@ export default function RootLayout({
   return (
     <html
       lang="id"
+      data-scroll-behavior="smooth"
       className={`${marcellus.variable} ${alegreyaSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">

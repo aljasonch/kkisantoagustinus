@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toBlob } from "html-to-image";
 import type { Renungan } from "@/lib/renungan";
 import { formatTanggalPanjang, keParagraf } from "@/lib/renungan";
 
@@ -77,7 +78,7 @@ function ModalShareRenungan({
   const [sedangMemproses, setSedangMemproses] = useState(false);
   const [statusTersalin, setStatusTersalin] = useState<string | null>(null);
   const [bisaBagikanWeb, setBisaBagikanWeb] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const previewRef = useRef<HTMLDivElement | null>(null);
 
   const tanggalPanjang = formatTanggalPanjang(renungan.tanggal);
   const judulRenungan = renungan.judul || renungan.referensiAyat || "Renungan Harian";
@@ -103,249 +104,14 @@ function ModalShareRenungan({
     };
   }, [onTutup]);
 
-  // Fungsi menggambar ke HTML5 Canvas untuk ekspor gambar beresolusi tinggi
+  // Snapshot pratinjau HTML menjadi gambar beresolusi tinggi.
+  // ponytail: skala tetap pixelRatio 3 (~340px pratinjau → ~1020px). Kalau butuh
+  // resolusi lebih besar, naikkan pixelRatio atau perbesar ukuran pratinjau.
   const buatGambarCanvas = useCallback(async (): Promise<Blob | null> => {
-    const isStory = rasio === "story";
-    const width = 1080;
-    const height = isStory ? 1920 : 1080;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-
-    // Background Krem
-    ctx.fillStyle = "#FAF6EE";
-    ctx.fillRect(0, 0, width, height);
-
-    // Bingkai Ganda Emas
-    const pad = 40;
-    ctx.strokeStyle = "#E6D9B4";
-    ctx.lineWidth = 6;
-    ctx.strokeRect(pad, pad, width - pad * 2, height - pad * 2);
-
-    ctx.strokeStyle = "#8A6D1F";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(pad + 12, pad + 12, width - (pad + 12) * 2, height - (pad + 12) * 2);
-
-    // Muat Logo KKI
-    const logo = new window.Image();
-    logo.crossOrigin = "anonymous";
-    await new Promise<void>((resolve) => {
-      logo.onload = () => resolve();
-      logo.onerror = () => resolve();
-      logo.src = "/logo_kki.png";
-    });
-
-    let currentY = isStory ? 280 : 120;
-
-    // Gambar Logo di tengah atas
-    if (logo.complete && logo.naturalWidth > 0) {
-      const logoH = 160;
-      const logoW = (logo.naturalWidth / logo.naturalHeight) * logoH;
-      ctx.drawImage(logo, (width - logoW) / 2, currentY, logoW, logoH);
-      currentY += logoH + (isStory ? 60 : 30);
-    } else {
-      currentY += isStory ? 80 : 40;
-    }
-
-    // Teks Komunitas Header
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#8A6D1F";
-    ctx.font = "bold 34px serif";
-    ctx.fillText("KOMUNITAS KERAHIMAN ILAHI", width / 2, currentY);
-    currentY += isStory ? 60 : 40;
-
-    ctx.fillStyle = "#5C534E";
-    ctx.font = "26px sans-serif";
-    ctx.fillText("Paroki Karawaci · Gereja Santo Agustinus", width / 2, currentY);
-    currentY += isStory ? 80 : 50;
-
-    // Garis Pemisah Emas
-    ctx.strokeStyle = "#B08D2E";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(width / 2 - 160, currentY);
-    ctx.lineTo(width / 2 + 160, currentY);
-    ctx.stroke();
-    currentY += isStory ? 90 : 60;
-
-    // Tanggal
-    ctx.fillStyle = "#5C534E";
-    ctx.font = "italic 32px sans-serif";
-    ctx.fillText(tanggalPanjang, width / 2, currentY);
-    currentY += isStory ? 90 : 60;
-
-    // Helper Wrap Text
-    const wrapText = (
-      text: string,
-      x: number,
-      y: number,
-      maxWidth: number,
-      lineHeight: number,
-      font: string,
-      fillStyle: string
-    ) => {
-      ctx.font = font;
-      ctx.fillStyle = fillStyle;
-      const words = text.split(" ");
-      let line = "";
-      let lines: string[] = [];
-
-      for (let n = 0; n < words.length; n++) {
-        const testLine = line + words[n] + " ";
-        const metrics = ctx.measureText(testLine);
-        if (metrics.width > maxWidth && n > 0) {
-          lines.push(line.trim());
-          line = words[n] + " ";
-        } else {
-          line = testLine;
-        }
-      }
-      lines.push(line.trim());
-
-      for (let i = 0; i < lines.length; i++) {
-        ctx.fillText(lines[i], x, y + i * lineHeight);
-      }
-      return lines.length * lineHeight;
-    };
-
-    // Judul Renungan
-    const maxTextWidth = width - 160;
-    const heightJudul = wrapText(
-      judulRenungan,
-      width / 2,
-      currentY,
-      maxTextWidth,
-      68,
-      "bold 56px serif",
-      "#2B2320"
-    );
-    currentY += heightJudul + (isStory ? 30 : 20);
-
-    // Kutipan Ayat / Faustina / Paragraf utama
-    if (renungan.ayat) {
-      // Box Kutipan Ayat
-      ctx.fillStyle = "#F3ECDD";
-      const boxMargin = 80;
-      const boxW = width - boxMargin * 2;
-      
-      // Ukur tinggi teks ayat lebih dulu
-      const textAyat = `“${renungan.ayat}”`;
-      ctx.font = "italic 40px serif";
-      const words = textAyat.split(" ");
-      let tempLine = "";
-      let lineCount = 1;
-      for (let w of words) {
-        if (ctx.measureText(tempLine + w + " ").width > boxW - 100) {
-          lineCount++;
-          tempLine = w + " ";
-        } else {
-          tempLine += w + " ";
-        }
-      }
-      const ayatTextHeight = lineCount * 56;
-      const boxH = ayatTextHeight + (renungan.referensiAyat ? 100 : 70);
-
-      // Gambar background box
-      ctx.beginPath();
-      ctx.roundRect((width - boxW) / 2, currentY, boxW, boxH, 20);
-      ctx.fill();
-
-      // Gambar teks ayat di dalam box
-      let boxTextY = currentY + 65;
-      wrapText(
-        textAyat,
-        width / 2,
-        boxTextY,
-        boxW - 100,
-        56,
-        "italic 40px serif",
-        "#2B2320"
-      );
-
-      if (renungan.referensiAyat) {
-        ctx.font = "bold 28px sans-serif";
-        ctx.fillStyle = "#9E3B33";
-        ctx.fillText(renungan.referensiAyat, width / 2, boxTextY + ayatTextHeight + 5);
-      }
-
-      currentY += boxH + 40;
-    } else if (renungan.kutipanFaustina) {
-      // Box Faustina
-      ctx.fillStyle = "#2B2320";
-      const boxMargin = 80;
-      const boxW = width - boxMargin * 2;
-      const textKutipan = `“${renungan.kutipanFaustina}”`;
-      
-      ctx.font = "36px serif";
-      const words = textKutipan.split(" ");
-      let tempLine = "";
-      let lineCount = 1;
-      for (let w of words) {
-        if (ctx.measureText(tempLine + w + " ").width > boxW - 100) {
-          lineCount++;
-          tempLine = w + " ";
-        } else {
-          tempLine += w + " ";
-        }
-      }
-      const textH = lineCount * 52;
-      const boxH = textH + 110;
-
-      ctx.beginPath();
-      ctx.roundRect((width - boxW) / 2, currentY, boxW, boxH, 20);
-      ctx.fill();
-
-      let boxTextY = currentY + 65;
-      wrapText(
-        textKutipan,
-        width / 2,
-        boxTextY,
-        boxW - 100,
-        52,
-        "36px serif",
-        "#FAF6EE"
-      );
-
-      ctx.font = "bold 24px sans-serif";
-      ctx.fillStyle = "#E6D9B4";
-      ctx.fillText("BUKU HARIAN SANTA FAUSTINA", width / 2, boxTextY + textH + 10);
-
-      currentY += boxH + 40;
-    } else if (paragrafUtama) {
-      // Ringkasan paragraf jika tidak ada ayat/kutipan
-      const dipotong = paragrafUtama.length > 250 ? paragrafUtama.slice(0, 250) + "…" : paragrafUtama;
-      const heightPar = wrapText(
-        dipotong,
-        width / 2,
-        currentY,
-        maxTextWidth,
-        48,
-        "32px sans-serif",
-        "#4A413C"
-      );
-      currentY += heightPar + 40;
-    }
-
-    // Footer Semboyan (di bagian paling bawah canvas)
-    const footerY = height - (isStory ? 200 : 120);
-    ctx.strokeStyle = "#E6D9B4";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(width / 2 - 220, footerY - 50);
-    ctx.lineTo(width / 2 + 220, footerY - 50);
-    ctx.stroke();
-
-    ctx.fillStyle = "#9E3B33";
-    ctx.font = "bold italic 38px serif";
-    ctx.fillText("“Yesus, Engkau Andalanku”", width / 2, footerY);
-
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), "image/png", 0.95);
-    });
-  }, [rasio, renungan, tanggalPanjang, judulRenungan, paragrafUtama]);
+    const node = previewRef.current;
+    if (!node) return null;
+    return toBlob(node, { pixelRatio: 3 });
+  }, []);
 
   // Aksi Unduh Gambar
   async function unduhGambar() {
@@ -545,10 +311,11 @@ function ModalShareRenungan({
           {/* Pratinjau Kartu Visual (HTML element dengan Logo KKI) */}
           <div className="flex justify-center bg-tinta/5 p-4 rounded-xl">
             <div
-              className={`relative flex flex-col justify-between rounded-xl border-2 border-emas-muda bg-krem p-6 text-center shadow-md transition-all ${
+              ref={previewRef}
+              className={`relative flex flex-col rounded-xl border-2 border-emas-muda bg-krem p-6 text-center shadow-md transition-all ${
                 rasio === "story"
                   ? "w-[300px] min-h-[500px]"
-                  : "w-[340px] aspect-square"
+                  : "w-[340px] aspect-square justify-between"
               }`}
             >
               {/* Bingkai Dalam */}
@@ -575,8 +342,8 @@ function ModalShareRenungan({
                 <p className="text-xs italic text-abu">{tanggalPanjang}</p>
               </div>
 
-              {/* Teks Judul & Ayat */}
-              <div className="my-auto py-2">
+              {/* Teks Judul & Ayat — story: nempel di bawah header; persegi: tetap di tengah via justify-between */}
+              <div className={`py-2 ${rasio === "story" ? "" : "my-auto"}`}>
                 <h4 className="font-display text-base font-bold text-tinta line-clamp-2">
                   {judulRenungan}
                 </h4>
@@ -601,7 +368,7 @@ function ModalShareRenungan({
               </div>
 
               {/* Footer Semboyan */}
-              <div className="pt-2 border-t border-emas-muda/60">
+              <div className="mt-auto pt-2 border-t border-emas-muda/60">
                 <p className="font-display text-xs font-bold italic text-merah">
                   &ldquo;Yesus, Engkau Andalanku&rdquo;
                 </p>

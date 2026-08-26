@@ -1,11 +1,14 @@
 import {
   collection,
   doc,
+  endBefore,
   getDoc,
   getDocs,
   limit,
+  limitToLast,
   orderBy,
   query,
+  startAfter,
   where,
 } from "firebase/firestore";
 import { firebaseSiap, getDb } from "./firebase";
@@ -73,24 +76,61 @@ function keRenungan(id: string, data: Record<string, unknown>): Renungan {
 }
 
 /**
- * Semua renungan berstatus published sampai hari ini, urut tanggal terbaru.
+ * Pilih kursor arsip dari query string yang sudah dibaca page.
+ */
+export function keKursorArsip(searchParams: {
+  sampai?: string | string[];
+  sebelum?: string | string[];
+}): { cursor: string | undefined; arah: "berikutnya" | "sebelumnya" } {
+  const sebelum = typeof searchParams.sebelum === "string" && POLA_TANGGAL.test(searchParams.sebelum)
+    ? searchParams.sebelum
+    : undefined;
+  if (sebelum) return { cursor: sebelum, arah: "sebelumnya" };
+
+  const sampai = typeof searchParams.sampai === "string" && POLA_TANGGAL.test(searchParams.sampai)
+    ? searchParams.sampai
+    : undefined;
+  return { cursor: sampai, arah: "berikutnya" };
+}
+
+/**
+ * Halaman renungan berstatus published sampai hari ini, urut tanggal terbaru.
  * Butuh composite index (status ASC, tanggal DESC); lihat firestore.indexes.json.
  */
-export async function ambilArsipRenungan(): Promise<Renungan[]> {
-  if (!firebaseSiap()) return [];
+export async function ambilArsipRenungan(
+  sampai?: string,
+  arah: "berikutnya" | "sebelumnya" = "berikutnya",
+  jumlah = 10
+): Promise<{ items: Renungan[]; sisa: boolean; adaSebelum: boolean }> {
+  if (!firebaseSiap()) return { items: [], sisa: false, adaSebelum: false };
   try {
-    const snap = await getDocs(
-      query(
-        collection(getDb(), "renungan"),
-        where("status", "==", "published"),
-        where("tanggal", "<=", tanggalHariIni()),
-        orderBy("tanggal", "desc")
-      )
+    const dasar = query(
+      collection(getDb(), "renungan"),
+      where("status", "==", "published"),
+      where("tanggal", "<=", tanggalHariIni()),
+      orderBy("tanggal", "desc")
     );
-    return snap.docs.map((d) => keRenungan(d.id, d.data()));
+    const dibatasi = sampai
+      ? query(
+          dasar,
+          arah === "sebelumnya"
+            ? endBefore(sampai)
+            : startAfter(sampai),
+          arah === "sebelumnya" ? limitToLast(jumlah + 1) : limit(jumlah + 1)
+        )
+      : query(dasar, limit(jumlah + 1));
+    const snap = await getDocs(dibatasi);
+    const punyaLebih = snap.docs.length > jumlah;
+    const docs = arah === "sebelumnya" && punyaLebih ? snap.docs.slice(1) : snap.docs.slice(0, jumlah);
+    const items = docs.map((d) => keRenungan(d.id, d.data()));
+    return {
+      items,
+      sisa: arah === "sebelumnya" ? Boolean(sampai) : punyaLebih,
+      adaSebelum: arah === "sebelumnya" ? punyaLebih : Boolean(sampai),
+    };
   } catch (err) {
     console.error("Gagal memuat arsip renungan:", err);
-    return [];
+    return { items: [], sisa: false, adaSebelum: false };
   }
 }
 

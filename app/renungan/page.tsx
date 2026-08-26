@@ -3,7 +3,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Muncul } from "@/components/muncul";
 import { TombolShareRenungan } from "@/components/tombol-share-renungan";
-import { ambilArsipRenungan, formatTanggalPanjang } from "@/lib/renungan";
+import {
+  ambilArsipRenungan,
+  formatTanggalPanjang,
+  keKursorArsip,
+} from "@/lib/renungan";
 
 export const metadata: Metadata = {
   title: "Renungan Harian",
@@ -13,8 +17,12 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function ArsipRenungan() {
-  const arsip = await ambilArsipRenungan();
+export default async function ArsipRenungan(props: PageProps<"/renungan">) {
+  const kursor = keKursorArsip(await props.searchParams);
+  const { items, sisa, adaSebelum } = await ambilArsipRenungan(
+    kursor.cursor,
+    kursor.arah
+  );
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-14">
@@ -24,10 +32,10 @@ export default async function ArsipRenungan() {
         teman perjalanan untuk menghidupi kerahiman Allah.
       </p>
 
-      {arsip.length > 0 ? (
+      {items.length > 0 ? (
         <Muncul>
           <ul className="mt-10 divide-y divide-krem-tua">
-            {arsip.map((r) => (
+            {items.map((r) => (
               <li key={r.tanggal} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-6 hover:bg-krem sm:rounded-lg sm:px-4 sm:-mx-4 group">
                 <Link
                   href={`/renungan/${r.tanggal}`}
@@ -74,6 +82,39 @@ export default async function ArsipRenungan() {
             tayang di sini setelah situs diresmikan. Silakan kembali lagi.
           </p>
         </div>
+      )}
+
+      {(sisa || adaSebelum || (kursor.cursor && !items[0])) && (
+        <nav
+          aria-label="Navigasi arsip renungan"
+          className="mt-10 flex items-center justify-between border-t border-krem-tua pt-8"
+        >
+          {adaSebelum && items[0] ? (
+            <Link
+              href={`/renungan?sebelum=${encodeURIComponent(items[0].tanggal)}`}
+              className="text-emas-tua underline decoration-2 underline-offset-4 hover:text-tinta"
+            >
+              ← Halaman sebelumnya
+            </Link>
+          ) : !items[0] ? (
+            <Link
+              href="/renungan"
+              className="text-emas-tua underline decoration-2 underline-offset-4 hover:text-tinta"
+            >
+              ← Kembali ke arsip terbaru
+            </Link>
+          ) : (
+            <span />
+          )}
+          {sisa && items[items.length - 1] && (
+            <Link
+              href={`/renungan?sampai=${encodeURIComponent(items[items.length - 1].tanggal)}`}
+              className="text-emas-tua underline decoration-2 underline-offset-4 hover:text-tinta"
+            >
+              Halaman berikutnya →
+            </Link>
+          )}
+        </nav>
       )}
     </div>
   );

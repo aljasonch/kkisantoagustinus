@@ -102,7 +102,7 @@ export function GaleriGrid({ foto }: { foto: FotoGaleri[] }) {
           role="dialog"
           aria-modal="true"
           aria-label={terbuka.caption || "Foto galeri"}
-          className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-tinta/90 p-4 sm:p-8"
+          className="fixed inset-0 z-70 flex flex-col items-center justify-center bg-tinta/90 p-4 sm:p-8"
           onClick={tutup}
         >
           <button
@@ -166,7 +166,7 @@ export function GaleriGrid({ foto }: { foto: FotoGaleri[] }) {
             className="w-full max-w-3xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="relative block aspect-[4/3] w-full overflow-hidden rounded-xl bg-putih">
+            <span className="relative block aspect-4/3 w-full overflow-hidden rounded-xl bg-putih">
               <Image
                 src={urlAktif}
                 alt={terbuka.caption || "Foto kegiatan KKI Karawaci"}
