@@ -105,13 +105,24 @@ function ModalShareRenungan({
   }, [onTutup]);
 
   // Snapshot pratinjau HTML menjadi gambar beresolusi tinggi.
-  // ponytail: skala tetap pixelRatio 3 (~340px pratinjau → ~1020px). Kalau butuh
-  // resolusi lebih besar, naikkan pixelRatio atau perbesar ukuran pratinjau.
+  // Preview = hasil download: node dikunci w/h fix agar 1:1 konsisten laptop/HP
   const buatGambarCanvas = useCallback(async (): Promise<Blob | null> => {
     const node = previewRef.current;
     if (!node) return null;
-    return toBlob(node, { pixelRatio: 3 });
-  }, []);
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      await document.fonts.ready;
+    }
+    const w = rasio === "persegi" ? 340 : 300;
+    const h = rasio === "persegi" ? 340 : 533;
+    return toBlob(node, {
+      pixelRatio: 3,
+      width: w,
+      height: h,
+      canvasWidth: w * 3,
+      canvasHeight: h * 3,
+      cacheBust: true,
+    });
+  }, [rasio]);
 
   // Aksi Unduh Gambar
   async function unduhGambar() {
@@ -308,16 +319,20 @@ function ModalShareRenungan({
             </div>
           </div>
 
-          {/* Pratinjau Kartu Visual (HTML element dengan Logo KKI) */}
-          <div className="flex justify-center bg-tinta/5 p-4 rounded-xl">
-            <div
-              ref={previewRef}
-              className={`relative flex flex-col rounded-xl border-2 border-emas-muda bg-krem p-6 text-center shadow-md transition-all ${
-                rasio === "story"
-                  ? "w-[300px] min-h-[500px]"
-                  : "w-[340px] aspect-square justify-between"
-              }`}
-            >
+          {/* Pratinjau Kartu Visual — ukuran dikunci agar preview = hasil download (1:1 fix di HP & laptop) */}
+          <div className="flex justify-center bg-tinta/5 p-4 rounded-xl overflow-hidden">
+            <div className="flex justify-center max-[380px]:scale-[0.88] sm:scale-100 origin-top transition-transform">
+              <div
+                ref={previewRef}
+                style={
+                  rasio === "persegi"
+                    ? { width: 340, height: 340 }
+                    : { width: 300, height: 533 }
+                }
+                className={`relative flex shrink-0 flex-col overflow-hidden rounded-xl border-2 border-emas-muda bg-krem p-6 text-center shadow-md ${
+                  rasio === "story" ? "" : "justify-between"
+                }`}
+              >
               {/* Bingkai Dalam */}
               <div className="pointer-events-none absolute inset-2 rounded-lg border border-emas-tua/40" />
 
@@ -373,6 +388,7 @@ function ModalShareRenungan({
                   &ldquo;Yesus, Engkau Andalanku&rdquo;
                 </p>
               </div>
+            </div>
             </div>
           </div>
 
