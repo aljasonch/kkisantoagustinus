@@ -1,35 +1,35 @@
-# Website KKI Paroki Karawaci
+# KKI Paroki Karawaci Website
 
-Situs resmi **Komunitas Kerahiman Ilahi (KKI) — Gereja Santo Agustinus, Paroki Karawaci, Tangerang** dengan semboyan _"Yesus, Engkau Andalanku"_.
+The official website of **Komunitas Kerahiman Ilahi (KKI) — Santo Agustinus Church, Karawaci Parish, Tangerang**, with the motto _"Jesus, I Trust in You"_.
 
-Situs ini menjadi pusat informasi komunitas: jadwal doa, teks devosi Koronka, renungan harian, galeri kegiatan, dan kontak. Pengurus dapat memperbarui renungan dan galeri secara mandiri melalui panel admin.
+The website serves as the community's information hub, featuring prayer schedules, the Divine Mercy Chaplet devotion text, daily reflections, activity galleries, and contact information. Administrators can independently update reflections and gallery content through the admin panel.
 
-## Gambaran
+## Overview
 
-- **Beranda:** hero, Renungan Hari Ini, sambutan Ketua, kutipan harian dari Buku Harian Santa Faustina, jadwal doa bersama, galeri terbaru.
-- **Tentang:** sejarah devosi Kerahiman Ilahi, profil KKI Karawaci, dan susunan pengurus.
-- **Devosi & Jadwal:** 5 unsur devosi, teks doa Koronka lengkap, jadwal rutin dan tahunan.
-- **Renungan:** arsip renungan harian + halaman detail per tanggal (`/renungan/[tanggal]`).
-- **Galeri:** dokumentasi foto kegiatan komunitas.
-- **Kontak:** alamat gereja + peta, kontak komunitas, tautan situs paroki.
-- **Admin (`/admin`):** login pengurus, tulis/terbitkan renungan (draft & published), kelola foto galeri.
+- **Home:** hero section, Today's Reflection, Chairman's welcome message, daily quote from the Diary of Saint Faustina, community prayer schedule, and latest gallery.
+- **About:** history of the Divine Mercy devotion, KKI Karawaci community profile, and organizational structure.
+- **Devotion & Schedule:** 5 elements of the devotion, complete Divine Mercy Chaplet prayer text, regular and annual schedules.
+- **Reflections:** daily reflection archive + detail page for each date (`/renungan/[tanggal]`).
+- **Gallery:** photo documentation of community activities.
+- **Contact:** church address + map, community contact information, and parish website link.
+- **Admin (`/admin`):** administrator login, write/publish reflections (draft & published), and manage gallery photos.
 
-## Teknologi
+## Technologies
 
 - **Next.js (App Router) + React + TypeScript**
-- **Tailwind CSS v4** untuk styling
-- **Firebase Auth + Firestore** untuk login admin dan data renungan/galeri
-- **Cloudinary** untuk penyimpanan foto galeri
+- **Tailwind CSS v4** for styling
+- **Firebase Auth + Firestore** for administrator authentication and reflection/gallery data
+- **Cloudinary** for gallery photo storage
 
-## Struktur halaman
+## Page Structure
 
-| Rute | Isi |
+| Route | Content |
 |---|---|
-| `/` | Beranda |
-| `/tentang` | Sejarah, profil komunitas, pengurus |
-| `/devosi-jadwal` | Unsur devosi, teks Koronka, jadwal |
-| `/renungan` | Arsip renungan |
-| `/renungan/[tanggal]` | Detail renungan harian |
-| `/galeri` | Galeri kegiatan |
-| `/kontak` | Kontak, alamat, peta |
-| `/admin` | Panel pengurus (renungan + galeri) |
+| `/` | Home |
+| `/tentang` | History, community profile, organizational structure |
+| `/devosi-jadwal` | Devotion elements, Chaplet prayer text, schedule |
+| `/renungan` | Reflection archive |
+| `/renungan/[tanggal]` | Daily reflection details |
+| `/galeri` | Activity gallery |
+| `/kontak` | Contact information, address, map |
+| `/admin` | Administrator panel (reflections + gallery) |
