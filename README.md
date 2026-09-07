@@ -1,51 +1,35 @@
 # Website KKI Paroki Karawaci
 
-Situs Komunitas Kerahiman Ilahi (KKI) Paroki Karawaci, Gereja Santo Agustinus,
-Tangerang. Next.js (App Router) + Tailwind CSS v4 + Firebase.
+Situs resmi **Komunitas Kerahiman Ilahi (KKI) — Gereja Santo Agustinus, Paroki Karawaci, Tangerang** dengan semboyan _"Yesus, Engkau Andalanku"_.
 
-Dokumen acuan:
+Situs ini menjadi pusat informasi komunitas: jadwal doa, teks devosi Koronka, renungan harian, galeri kegiatan, dan kontak. Pengurus dapat memperbarui renungan dan galeri secara mandiri melalui panel admin.
 
-- [`docs/spec-website-kki-karawaci.md`](docs/spec-website-kki-karawaci.md): spec & roadmap
-- [`docs/design-guidelines-kki.md`](docs/design-guidelines-kki.md): panduan visual
-- [`docs/setup-firebase.md`](docs/setup-firebase.md): setup Firebase (Auth + Firestore + rules)
+## Gambaran
 
-## Menjalankan
+- **Beranda:** hero, Renungan Hari Ini, sambutan Ketua, kutipan harian dari Buku Harian Santa Faustina, jadwal doa bersama, galeri terbaru.
+- **Tentang:** sejarah devosi Kerahiman Ilahi, profil KKI Karawaci, dan susunan pengurus.
+- **Devosi & Jadwal:** 5 unsur devosi, teks doa Koronka lengkap, jadwal rutin dan tahunan.
+- **Renungan:** arsip renungan harian + halaman detail per tanggal (`/renungan/[tanggal]`).
+- **Galeri:** dokumentasi foto kegiatan komunitas.
+- **Kontak:** alamat gereja + peta, kontak komunitas, tautan situs paroki.
+- **Admin (`/admin`):** login pengurus, tulis/terbitkan renungan (draft & published), kelola foto galeri.
 
-```bash
-npm install
-# isi kredensial Firebase + Cloudinary di .env (lihat docs/setup-firebase.md)
-npm run dev
-```
+## Teknologi
 
-Tanpa kredensial Firebase, situs tetap jalan: bagian renungan menampilkan pesan
-"belum tersedia" dan `/admin` menampilkan petunjuk setup.
+- **Next.js (App Router) + React + TypeScript**
+- **Tailwind CSS v4** untuk styling
+- **Firebase Auth + Firestore** untuk login admin dan data renungan/galeri
+- **Cloudinary** untuk penyimpanan foto galeri
 
-## Struktur
+## Struktur halaman
 
 | Rute | Isi |
 |---|---|
-| `/` | Beranda: hero, Renungan Hari Ini, sambutan Ketua, kutipan Santa Faustina, jadwal rutin, galeri terbaru |
-| `/tentang` | Sejarah devosi & KKI Karawaci, pengurus |
-| `/devosi-jadwal` | 5 unsur devosi, teks Koronka penuh, jadwal rutin & tahunan |
-| `/renungan` | Arsip renungan published (urut mundur) |
-| `/renungan/[tanggal]` | Detail renungan per tanggal (`YYYY-MM-DD`) |
-| `/galeri` | Galeri foto kegiatan komunitas (Cloudinary + Firestore) |
-| `/kontak` | Kontak komunitas, alamat gereja + peta, tautan situs paroki |
-| `/admin` | Panel pengurus: login Firebase Auth, daftar & hapus renungan |
-| `/admin/editor` | Tulis/ubah renungan, Terbitkan atau Simpan sebagai Draft |
-| `/admin/galeri` | Unggah/hapus foto galeri (upload ke Cloudinary) |
-
-Teks yang masih menunggu isian dari Ketua ditandai `[ISI: ...]` (bergaris
-bawah putus-putus emas di halaman); daftar lengkapnya ada di spec bagian 4.
-
-## Status roadmap
-
-1. ✅ Setup Next.js + Tailwind
-2. ✅ Halaman statis dengan placeholder `[ISI: ...]`
-3. ✅ Setup project Firebase di console (panduan: `docs/setup-firebase.md`) + Cloudinary
-4. ✅ Admin panel `/admin` (login + CRUD renungan + galeri)
-5. ✅ Renungan hari ini di Beranda + arsip
-6. ✅ Galeri kegiatan, Instagram, logo, peta, jadwal rutin
-7. ⬜ Review bareng Ketua, isi konten asli
-8. ⬜ Sesi pengajaran admin panel
-9. ⬜ Publish (Vercel)
+| `/` | Beranda |
+| `/tentang` | Sejarah, profil komunitas, pengurus |
+| `/devosi-jadwal` | Unsur devosi, teks Koronka, jadwal |
+| `/renungan` | Arsip renungan |
+| `/renungan/[tanggal]` | Detail renungan harian |
+| `/galeri` | Galeri kegiatan |
+| `/kontak` | Kontak, alamat, peta |
+| `/admin` | Panel pengurus (renungan + galeri) |
