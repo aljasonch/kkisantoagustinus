@@ -28,6 +28,7 @@ function EditorRenungan({ profil }: { profil: Pengguna }) {
   const [ayat, setAyat] = useState("");
   const [referensiAyat, setReferensiAyat] = useState("");
   const [kutipanFaustina, setKutipanFaustina] = useState("");
+  const [noKutipanFaustina, setnoKutipanFaustina] = useState("");
   const [gambarUrl, setGambarUrl] = useState("");
   const [berkasGambar, setBerkasGambar] = useState<File | null>(null);
   const [pratinjauGambar, setPratinjauGambar] = useState<string | null>(null);
@@ -47,6 +48,7 @@ function EditorRenungan({ profil }: { profil: Pengguna }) {
           setAyat(data.ayat ?? "");
           setReferensiAyat(data.referensiAyat ?? "");
           setKutipanFaustina(data.kutipanFaustina ?? "");
+          setnoKutipanFaustina(data.noKutipanFaustina ?? "")
           setGambarUrl(data.gambarUrl ?? "");
           setIsiRenungan(data.isiRenungan ?? "");
           setDoaPenutup(data.doaPenutup ?? "");
@@ -97,6 +99,7 @@ function EditorRenungan({ profil }: { profil: Pengguna }) {
           referensiAyat: referensiAyat.trim(),
           gambarUrl: urlGambar,
           kutipanFaustina: kutipanFaustina.trim(),
+          noKutipanFaustina: noKutipanFaustina.trim(),
           isiRenungan: isiRenungan.trim(),
           doaPenutup: doaPenutup.trim(),
           penulis: profil.nama.trim(),
@@ -245,7 +248,7 @@ function EditorRenungan({ profil }: { profil: Pengguna }) {
             rows={3}
             value={kutipanFaustina}
             onChange={(e) => setKutipanFaustina(e.target.value)}
-            placeholder="Contoh: Hendaklah tiada satu jiwa pun takut mendekati Aku, sekalipun dosa-dosanya merah seperti kirmizi. (Buku Harian, no. 699)"
+            placeholder="Contoh: Hendaklah tiada satu jiwa pun takut mendekati Aku, sekalipun dosa-dosanya merah seperti kirmizi."
             className={kelasInput}
           />
           <p className="mt-2 text-base text-abu">
@@ -253,6 +256,20 @@ function EditorRenungan({ profil }: { profil: Pengguna }) {
             menonjol di halaman renungan dengan label &ldquo;Buku Harian Santa
             Faustina&rdquo;.
           </p>
+        </div>
+
+        <div>
+          <label htmlFor="kutipan" className="mb-2 block text-lg font-medium text-tinta">
+            Nomor Buku Harian Santa Faustina
+          </label>
+          <textarea
+            id="noKutipan"
+            rows={1}
+            value={noKutipanFaustina}
+            onChange={(e) => setnoKutipanFaustina(e.target.value)}
+            placeholder="699"
+            className={kelasInput}
+          />
         </div>
 
         <div>

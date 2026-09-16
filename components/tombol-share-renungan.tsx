@@ -77,19 +77,12 @@ function ModalShareRenungan({
   const [rasio, setRasio] = useState<FormatRasio>("persegi");
   const [sedangMemproses, setSedangMemproses] = useState(false);
   const [statusTersalin, setStatusTersalin] = useState<string | null>(null);
-  const [bisaBagikanWeb, setBisaBagikanWeb] = useState(false);
+  const bisaBagikanWeb = typeof navigator !== "undefined" && !!navigator.share;
   const previewRef = useRef<HTMLDivElement | null>(null);
 
   const tanggalPanjang = formatTanggalPanjang(renungan.tanggal);
   const judulRenungan = renungan.judul || renungan.referensiAyat || "Renungan Harian";
   const paragrafUtama = keParagraf(renungan.isiRenungan)[0] || "";
-
-  // Cek apakah navigator.share mendukung pengiriman berkas
-  useEffect(() => {
-    if (typeof navigator !== "undefined" && !!navigator.share) {
-      setBisaBagikanWeb(true);
-    }
-  }, []);
 
   // Kunci scroll saat modal terbuka & tutup via ESC
   useEffect(() => {
@@ -219,9 +212,16 @@ function ModalShareRenungan({
   async function salinTeks() {
     let teks = `Renungan Harian Komunitas Kerahiman Ilahi Paroki Karawaci\n`;
     teks += `${tanggalPanjang}\n\n`;
-    teks += `${judulRenungan}\n\n`;
+    teks += `*${judulRenungan}*\n\n`;
     if (renungan.ayat) {
-      teks += `"${renungan.ayat}" (${renungan.referensiAyat})\n\n`;
+      teks += `_"${renungan.ayat}" (*${renungan.referensiAyat}*)_\n\n`;
+    }
+
+    if (renungan.noKutipanFaustina && renungan.kutipanFaustina) {
+        teks += `*Buku Harian Santa Faustina No. ${renungan.noKutipanFaustina}*\n`;
+        teks += `_"${renungan.kutipanFaustina}"_\n\n`;
+    } else if (renungan.kutipanFaustina) { //note Jason: fallback untuk data lama
+        teks += `${renungan.kutipanFaustina}\n\n`;
     }
     teks += `${renungan.isiRenungan}\n\n`;
     if (renungan.doaPenutup) {

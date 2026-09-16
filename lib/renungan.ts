@@ -25,6 +25,7 @@ export type Renungan = {
   gambarUrl?: string;
   /** Kutipan dari buku harian Santa Faustina (opsional) */
   kutipanFaustina?: string;
+  noKutipanFaustina?: string;
   isiRenungan: string;
   doaPenutup?: string;
   /** Nama penulis/pengurus yang menyusun renungan ini (opsional). */
@@ -68,6 +69,7 @@ function keRenungan(id: string, data: Record<string, unknown>): Renungan {
     referensiAyat: (data.referensiAyat as string) ?? "",
     gambarUrl: data.gambarUrl as string | undefined,
     kutipanFaustina: data.kutipanFaustina as string | undefined,
+    noKutipanFaustina: data.noKutipanFaustina as string | undefined,
     isiRenungan: (data.isiRenungan as string) ?? "",
     doaPenutup: data.doaPenutup as string | undefined,
     penulis: data.penulis as string | undefined,

@@ -120,7 +120,7 @@ export default async function DetailRenungan(props: PageProps<"/renungan/[tangga
               &ldquo;{renungan.kutipanFaustina}&rdquo;
             </p>
             <cite className="mt-4 block text-base not-italic uppercase tracking-widest text-emas-muda">
-              Buku Harian Santa Faustina
+              Buku Harian Santa Faustina {renungan.noKutipanFaustina}
             </cite>
           </blockquote>
         </section>
